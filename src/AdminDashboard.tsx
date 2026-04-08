@@ -52,9 +52,6 @@ function UploadModal({
   const [categoryOrTag, setCategoryOrTag] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const galleryCategories = ["Events", "Activities", "Sports", "Academic", "Campus"];
-  const projectTags = ["Automation", "Sensors", "Renewable", "IoT", "Robotics", "3D Printing"];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageUrl || !title || !categoryOrTag) return;
@@ -116,24 +113,16 @@ function UploadModal({
           {/* Category / Tag */}
           <div>
             <label className="block text-white/70 text-sm font-medium mb-2">
-              {type === "gallery" ? "Category" : "Tag"}
+              {type === "gallery" ? "Category (e.g. Sports, Events)" : "Tag (e.g. Robotics, IoT)"}
             </label>
-            <div className="flex flex-wrap gap-2">
-              {(type === "gallery" ? galleryCategories : projectTags).map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setCategoryOrTag(opt)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
-                    categoryOrTag === opt
-                      ? "bg-brand-orange text-white border-brand-orange"
-                      : "bg-white/5 text-white/60 border-white/10 hover:border-white/30"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
+            <input
+              type="text"
+              value={categoryOrTag}
+              onChange={(e) => setCategoryOrTag(e.target.value)}
+              required
+              placeholder="Enter a category name"
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
+            />
           </div>
 
           <button
