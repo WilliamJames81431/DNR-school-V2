@@ -9,13 +9,7 @@ import {
   onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from "firebase/storage";
-import { auth, db, storage } from "./firebase";
+import { auth, db } from "./firebase";
 import {
   LogOut,
   Upload,
@@ -32,7 +26,6 @@ interface GalleryItem {
   url: string;
   title: string;
   category: string;
-  storagePath: string;
   createdAt: unknown;
 }
 
@@ -41,7 +34,6 @@ interface ProjectItem {
   image: string;
   title: string;
   tag: string;
-  storagePath: string;
   createdAt: unknown;
 }
 
@@ -53,31 +45,22 @@ function UploadModal({
 }: {
   type: "gallery" | "project";
   onClose: () => void;
-  onUpload: (file: File, title: string, categoryOrTag: string) => Promise<void>;
+  onUpload: (url: string, title: string, categoryOrTag: string) => Promise<void>;
 }) {
-  const [file, setFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [title, setTitle] = useState("");
   const [categoryOrTag, setCategoryOrTag] = useState("");
-  const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const galleryCategories = ["Events", "Activities", "Sports", "Academic", "Campus"];
   const projectTags = ["Automation", "Sensors", "Renewable", "IoT", "Robotics", "3D Printing"];
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !title || !categoryOrTag) return;
+    if (!imageUrl || !title || !categoryOrTag) return;
     setUploading(true);
     try {
-      await onUpload(file, title, categoryOrTag);
+      await onUpload(imageUrl, title, categoryOrTag);
       onClose();
     } catch (err) {
       console.error("Upload failed:", err);
@@ -102,34 +85,19 @@ function UploadModal({
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* File Input */}
+          {/* Image URL Input */}
           <div>
             <label className="block text-white/70 text-sm font-medium mb-2">
-              Image File
+              Image URL (Google Drive, Imgur, etc.)
             </label>
-            {preview ? (
-              <div className="relative rounded-2xl overflow-hidden aspect-video mb-2">
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => { setFile(null); setPreview(null); }}
-                  className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full hover:bg-red-500 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer hover:border-brand-orange/50 transition-colors bg-white/5">
-                <ImageIcon className="text-white/30 mb-2" size={32} />
-                <span className="text-white/40 text-sm">Click to select an image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
-            )}
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              required
+              placeholder="https://example.com/photo.jpg"
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
+            />
           </div>
 
           {/* Title */}
@@ -170,7 +138,7 @@ function UploadModal({
 
           <button
             type="submit"
-            disabled={uploading || !file || !title || !categoryOrTag}
+            disabled={uploading || !imageUrl || !title || !categoryOrTag}
             className="w-full bg-brand-orange text-white py-3 rounded-xl font-bold text-lg hover:bg-brand-yellow hover:text-brand-burgundy transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading ? (
@@ -221,21 +189,14 @@ export default function AdminDashboard() {
   };
 
   // ─── Upload handler ─────────────────────────────────────────────────────
-  const handleUpload = async (file: File, title: string, categoryOrTag: string) => {
-    if (!storage || !db) return;
-    const folder = activeTab === "gallery" ? "gallery" : "projects";
-    const fileName = `${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, `${folder}/${fileName}`);
-
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
+  const handleUpload = async (url: string, title: string, categoryOrTag: string) => {
+    if (!db) return;
 
     if (activeTab === "gallery") {
       await addDoc(collection(db, "gallery"), {
         url,
         title,
         category: categoryOrTag,
-        storagePath: `${folder}/${fileName}`,
         createdAt: serverTimestamp(),
       });
     } else {
@@ -243,7 +204,6 @@ export default function AdminDashboard() {
         image: url,
         title,
         tag: categoryOrTag,
-        storagePath: `${folder}/${fileName}`,
         createdAt: serverTimestamp(),
       });
     }
@@ -252,17 +212,12 @@ export default function AdminDashboard() {
   // ─── Delete handler ─────────────────────────────────────────────────────
   const handleDelete = async (
     id: string,
-    storagePath: string,
     collectionName: string
   ) => {
     if (!confirm("Are you sure you want to delete this?")) return;
-    if (!storage || !db) return;
+    if (!db) return;
     setDeleting(id);
     try {
-      // Delete from Storage
-      const storageRef = ref(storage, storagePath);
-      await deleteObject(storageRef);
-      // Delete from Firestore
       await deleteDoc(doc(db, collectionName, id));
     } catch (err) {
       console.error("Delete failed:", err);
@@ -375,7 +330,6 @@ export default function AdminDashboard() {
                     onClick={() =>
                       handleDelete(
                         item.id,
-                        item.storagePath,
                         activeTab === "gallery" ? "gallery" : "projects"
                       )
                     }
