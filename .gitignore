@@ -6,8 +6,13 @@ dist/
 
 # Environment files
 .env
+.env.*
 .env.local
 .env.*.local
+
+# Firebase service account keys (NEVER commit these)
+*-firebase-adminsdk-*.json
+service-account*.json
 
 # Editor directories
 .vscode/
