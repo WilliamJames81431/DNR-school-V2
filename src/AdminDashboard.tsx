@@ -178,8 +178,19 @@ export default function AdminDashboard() {
   };
 
   // ─── Upload handler ─────────────────────────────────────────────────────
-  const handleUpload = async (url: string, title: string, categoryOrTag: string) => {
+  const convertToDirectLink = (url: string) => {
+    const driveRegex = /drive\.google\.com\/file\/d\/([^\/]+)/;
+    const match = url.match(driveRegex);
+    if (match && match[1]) {
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    return url;
+  };
+
+  const handleUpload = async (rawUrl: string, title: string, categoryOrTag: string) => {
     if (!db) return;
+
+    const url = convertToDirectLink(rawUrl);
 
     if (activeTab === "gallery") {
       await addDoc(collection(db, "gallery"), {
