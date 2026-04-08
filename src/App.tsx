@@ -880,13 +880,21 @@ const Footer = () => {
         </motion.div>
         
         <motion.div 
-          className="pt-8 border-t border-white/10 text-center text-white/30 text-sm"
+          className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-white/30 text-sm"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
           <p>© {new Date().getFullYear()} D.N.R English Medium School. All Rights Reserved.</p>
+          <motion.a
+            href="/admin"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-brand-yellow hover:border-brand-yellow/30 transition-all font-medium tracking-wide text-xs uppercase"
+          >
+            Admin / Staff Login
+          </motion.a>
         </motion.div>
       </div>
     </motion.footer>
