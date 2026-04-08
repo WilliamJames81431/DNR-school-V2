@@ -20,6 +20,17 @@ import { useState, useEffect, useRef } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
 
+// ─── Utility ────────────────────────────────────────────────────────────
+const getDriveThumbnailUrl = (url: string) => {
+  if (!url) return url;
+  const driveRegex = /drive\.google\.com\/(?:file\/d\/|uc\?export=view[^\&]*&id=)([^\/&?]+)/;
+  const match = url.match(driveRegex);
+  if (match && match[1]) {
+    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
+  }
+  return url;
+};
+
 // ─── Spring Physics Presets ──────────────────────────────────────────────
 const springBouncy = { type: "spring" as const, stiffness: 300, damping: 20, mass: 0.8 };
 const springGentle = { type: "spring" as const, stiffness: 120, damping: 14, mass: 1 };
@@ -434,7 +445,7 @@ const AtalLab = () => {
                 className="group relative rounded-3xl overflow-hidden shadow-lg h-64 hover-lift"
               >
                 <img 
-                  src={project.image} 
+                  src={getDriveThumbnailUrl(project.image)} 
                   alt={project.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   referrerPolicy="no-referrer"
@@ -643,7 +654,7 @@ const Gallery = () => {
               className="group relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] cursor-pointer hover-lift"
             >
               <img
-                src={img.url}
+                src={getDriveThumbnailUrl(img.url)}
                 alt={img.title}
                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 referrerPolicy="no-referrer"

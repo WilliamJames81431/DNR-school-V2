@@ -179,10 +179,10 @@ export default function AdminDashboard() {
 
   // ─── Upload handler ─────────────────────────────────────────────────────
   const convertToDirectLink = (url: string) => {
-    const driveRegex = /drive\.google\.com\/file\/d\/([^\/]+)/;
+    const driveRegex = /drive\.google\.com\/(?:file\/d\/|uc\?export=view[^\&]*&id=)([^\/&?]+)/;
     const match = url.match(driveRegex);
     if (match && match[1]) {
-      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
     }
     return url;
   };
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <img
-                      src={imageUrl}
+                      src={convertToDirectLink(imageUrl)}
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
