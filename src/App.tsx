@@ -33,8 +33,8 @@ const getDriveThumbnailUrl = (url: string) => {
 };
 
 // ─── Site Content CMS Hook ────────────────────────────────────────────────
-const defaultSiteContent = {
-  hero: { title: "The Best Education", subtitle: "For Your Child" },
+const defaultSiteContent: any = {
+  hero: { title: "The Best Education", subtitle: "For Your Child", announcement: "ADMISSIONS OPEN 2026-2027" },
   about: { title: "About Our School", description: "D.N.R English Medium School is committed to providing a nurturing environment where students thrive academically, socially, and emotionally." },
   contact: { phone: "+91 96767 65185", email: "info@dnremschool.com", address: "Bhimavaram, Andhra Pradesh" }
 };
@@ -56,10 +56,10 @@ const useSiteContent = () => {
 };
 
 // ─── Spring Physics Presets ──────────────────────────────────────────────
-const springBouncy = { type: "spring" as const, stiffness: 300, damping: 20, mass: 0.8 };
-const springGentle = { type: "spring" as const, stiffness: 120, damping: 14, mass: 1 };
-const springFloaty = { type: "spring" as const, stiffness: 80, damping: 12, mass: 1.2 };
-const springSnappy = { type: "spring" as const, stiffness: 400, damping: 30, mass: 0.5 };
+const springBouncy = { type: "spring" as const, stiffness: 100, damping: 15, mass: 1 };
+const springGentle = { type: "spring" as const, stiffness: 60, damping: 20, mass: 1.5 };
+const springFloaty = { type: "spring" as const, stiffness: 40, damping: 25, mass: 2 };
+const springSnappy = { type: "spring" as const, stiffness: 150, damping: 20, mass: 1 };
 
 // ─── Floating Orbs Background ────────────────────────────────────────────
 const FloatingOrbs = () => (
@@ -265,13 +265,13 @@ const Hero = () => {
           className="max-w-2xl"
         >
           <motion.span 
-            className="inline-flex items-center gap-2 px-4 py-1 bg-brand-yellow text-brand-red font-bold rounded-full text-sm mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1 bg-brand-yellow text-brand-red font-bold rounded-full text-sm mb-6 shadow-md"
             initial={{ opacity: 0, scale: 0, rotate: -10 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ ...springBouncy, delay: 0.3 }}
           >
             <Sparkles size={14} />
-            ADMISSIONS OPEN 2026-2027
+            {content.hero?.announcement || "ADMISSIONS OPEN 2026-2027"}
           </motion.span>
           <motion.h1 
             className="text-5xl md:text-7xl font-bold leading-tight mb-6"
@@ -350,12 +350,12 @@ const AtalLab = () => {
     { title: "IoT Innovation", image: "/atl-project-4.jpg", tag: "IoT" },
   ];
 
-  const [firebaseProjects, setFirebaseProjects] = useState<{ image: string; title: string; tag: string }[]>([]);
+  const [firebaseProjects, setFirebaseProjects] = useState<{ image: string; title: string; tag: string; youtubeUrl?: string }[]>([]);
 
   useEffect(() => {
     if (!isConfigured || !db) return;
     const unsub = onSnapshot(collection(db, "projects"), (snap) => {
-      const items = snap.docs.map((d) => d.data() as { image: string; title: string; tag: string });
+      const items = snap.docs.map((d) => d.data() as { image: string; title: string; tag: string; youtubeUrl?: string });
       setFirebaseProjects(items);
     }, (error) => {
       console.error("Firebase fetch error:", error);
@@ -461,29 +461,41 @@ const AtalLab = () => {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
           >
-            {projects.map((project, idx) => (
-              <motion.div 
+            {projects.map((project: any, idx: number) => {
+              const CardWrapper = project.youtubeUrl ? motion.a : motion.div;
+              const wrapperProps = project.youtubeUrl ? { href: project.youtubeUrl, target: "_blank", rel: "noopener noreferrer" } : {};
+              
+              return (
+              <CardWrapper 
                 key={idx}
+                {...wrapperProps}
                 variants={staggerItem}
                 whileHover={{ scale: 1.05, y: -10 }}
                 transition={springBouncy}
-                className="group relative rounded-3xl overflow-hidden shadow-lg h-64 hover-lift"
+                className="group relative block rounded-3xl overflow-hidden shadow-lg h-64 hover-lift"
               >
                 <img 
                   src={getDriveThumbnailUrl(project.image)} 
                   alt={project.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                <div className="absolute bottom-6 left-6 text-white">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 transition-colors duration-500 group-hover:from-black/90"></div>
+                
+                {project.youtubeUrl && (
+                  <div className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20 transition-transform duration-500 hover:scale-125">
+                    <Youtube size={24} fill="currentColor" />
+                  </div>
+                )}
+
+                <div className="absolute bottom-6 left-6 text-white z-20">
                   <span className="text-xs font-bold bg-brand-orange px-2 py-1 rounded mb-2 inline-block">
                     {project.tag}
                   </span>
                   <h5 className="text-xl font-bold">{project.title}</h5>
                 </div>
-              </motion.div>
-            ))}
+              </CardWrapper>
+            )})}
           </motion.div>
         </div>
       </div>

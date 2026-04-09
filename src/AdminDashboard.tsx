@@ -51,11 +51,12 @@ function UploadModal({
 }: {
   type: "gallery" | "project";
   onClose: () => void;
-  onUpload: (url: string, title: string, categoryOrTag: string) => Promise<void>;
+  onUpload: (url: string, title: string, categoryOrTag: string, youtubeUrl?: string) => Promise<void>;
 }) {
   const [imageUrl, setImageUrl] = useState("");
   const [title, setTitle] = useState("");
   const [categoryOrTag, setCategoryOrTag] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +64,7 @@ function UploadModal({
     if (!imageUrl || !title || !categoryOrTag) return;
     setUploading(true);
     try {
-      await onUpload(imageUrl, title, categoryOrTag);
+      await onUpload(imageUrl, title, categoryOrTag, youtubeUrl);
       onClose();
     } catch (err) {
       console.error("Upload failed:", err);
@@ -130,6 +131,22 @@ function UploadModal({
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
             />
           </div>
+
+          {/* Optional YouTube URL for Projects */}
+          {type === "project" && (
+            <div>
+              <label className="block text-white/70 text-sm font-medium mb-2">
+                YouTube Video Link (Optional)
+              </label>
+              <input
+                type="url"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
@@ -223,6 +240,10 @@ function SiteContentEditor() {
           <FileText className="text-brand-orange" /> Hero Section
         </h2>
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Announcement Badge</label>
+            <input type="text" value={content?.hero?.announcement || ""} onChange={(e) => handleChange("hero", "announcement", e.target.value)} placeholder="e.g. ADMISSIONS OPEN 2026-2027" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
+          </div>
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">Main Title</label>
             <input type="text" value={content?.hero?.title || ""} onChange={(e) => handleChange("hero", "title", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
@@ -321,7 +342,7 @@ export default function AdminDashboard() {
     return url;
   };
 
-  const handleUpload = async (rawUrl: string, title: string, categoryOrTag: string) => {
+  const handleUpload = async (rawUrl: string, title: string, categoryOrTag: string, youtubeUrl?: string) => {
     if (!db) return;
 
     const url = convertToDirectLink(rawUrl);
@@ -338,6 +359,7 @@ export default function AdminDashboard() {
         image: url,
         title,
         tag: categoryOrTag,
+        youtubeUrl: youtubeUrl || "",
         createdAt: serverTimestamp(),
       });
     }
