@@ -46,7 +46,7 @@ const useSiteContent = () => {
     if (!isConfigured || !db) return;
     const unsub = onSnapshot(doc(db, "site", "content"), (snap) => {
       if (snap.exists()) {
-        setContent((prev) => ({ ...prev, ...snap.data() }));
+        setContent((prev: any) => ({ ...prev, ...snap.data() }));
       }
     });
     return unsub;
