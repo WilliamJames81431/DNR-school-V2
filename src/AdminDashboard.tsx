@@ -174,6 +174,10 @@ function SiteContentEditor() {
         });
       }
       setLoading(false);
+    }, (err) => {
+      console.error("Content stream error:", err);
+      setLoading(false);
+      alert("Database error: Could not fetch site content. Make sure your rules are deployed!");
     });
     return unsub;
   }, []);
