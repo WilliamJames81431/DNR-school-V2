@@ -6,6 +6,8 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  getDoc,
+  setDoc,
   onSnapshot,
   serverTimestamp,
 } from "firebase/firestore";
@@ -19,6 +21,10 @@ import {
   Loader2,
   Plus,
   X,
+  Settings,
+  FileText,
+  Phone,
+  Save,
 } from "lucide-react";
 
 interface GalleryItem {
@@ -148,10 +154,134 @@ function UploadModal({
   );
 }
 
+// ─── Site Content Editor ───────────────────────────────────────────────────
+function SiteContentEditor() {
+  const [content, setContent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!db) return;
+    const unsub = onSnapshot(doc(db, "site", "content"), (snap) => {
+      if (snap.exists()) {
+        setContent(snap.data());
+      } else {
+        // Defaults
+        setContent({
+          hero: { title: "The Best Education For Your Child", subtitle: "Discover a place where learning comes alive." },
+          about: { title: "About Our School", description: "D.N.R English Medium School is committed to providing a nurturing environment where students thrive academically, socially, and emotionally." },
+          contact: { phone: "+91 12345 67890", email: "info@dnremschool.com", address: "Bhimavaram, Andhra Pradesh" },
+        });
+      }
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  const handleSave = async () => {
+    if (!db) return;
+    setSaving(true);
+    try {
+      await setDoc(doc(db, "site", "content"), content, { merge: true });
+      alert("Site content updated successfully!");
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Failed to save content. Ensure you have the correct permissions.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChange = (section: string, field: string, value: string) => {
+    setContent((prev: any) => ({
+      ...prev,
+      [section]: {
+        ...(prev?.[section] || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-24 text-white/50">
+        <Loader2 className="animate-spin mx-auto mb-2" />
+        Loading editor...
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
+      {/* Hero Section */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-xl">
+        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <FileText className="text-brand-orange" /> Hero Section
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Main Title</label>
+            <input type="text" value={content?.hero?.title || ""} onChange={(e) => handleChange("hero", "title", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Subtitle</label>
+            <textarea value={content?.hero?.subtitle || ""} onChange={(e) => handleChange("hero", "subtitle", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange h-24 transition-all hover:border-white/30" />
+          </div>
+        </div>
+      </div>
+
+      {/* About Us Section */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-xl">
+        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <Settings className="text-brand-orange" /> About Us Section
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Section Title</label>
+            <input type="text" value={content?.about?.title || ""} onChange={(e) => handleChange("about", "title", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Description</label>
+            <textarea value={content?.about?.description || ""} onChange={(e) => handleChange("about", "description", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange h-32 transition-all hover:border-white/30" />
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Section */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-xl">
+        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <Phone className="text-brand-orange" /> Contact Information
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Phone Number</label>
+            <input type="text" value={content?.contact?.phone || ""} onChange={(e) => handleChange("contact", "phone", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Email Address</label>
+            <input type="email" value={content?.contact?.email || ""} onChange={(e) => handleChange("contact", "email", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Physical Address</label>
+            <textarea value={content?.contact?.address || ""} onChange={(e) => handleChange("contact", "address", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange h-24 transition-all hover:border-white/30" />
+          </div>
+        </div>
+      </div>
+
+      <div className="sticky bottom-8 flex justify-end z-10">
+        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-brand-orange hover:bg-brand-yellow text-white hover:text-brand-burgundy px-10 py-4 rounded-full font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 border border-white/20">
+          <Save size={20} />
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"gallery" | "projects">("gallery");
+  const [activeTab, setActiveTab] = useState<"gallery" | "projects" | "content">("gallery");
   const [showUpload, setShowUpload] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
@@ -229,6 +359,7 @@ export default function AdminDashboard() {
   const tabs = [
     { key: "gallery" as const, label: "Gallery", icon: <ImageIcon size={18} /> },
     { key: "projects" as const, label: "ATL Projects", icon: <Cpu size={18} /> },
+    { key: "content" as const, label: "Site Content", icon: <FileText size={18} /> },
   ];
 
   const items = activeTab === "gallery" ? galleryItems : projectItems;
@@ -282,17 +413,21 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          <button
-            onClick={() => setShowUpload(true)}
-            className="flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-xl font-bold hover:bg-brand-yellow hover:text-brand-burgundy transition-all"
-          >
-            <Plus size={18} />
-            Add {activeTab === "gallery" ? "Photo" : "Project"}
-          </button>
+          {activeTab !== "content" && (
+            <button
+              onClick={() => setShowUpload(true)}
+              className="flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-xl font-bold hover:bg-brand-yellow hover:text-brand-burgundy transition-all"
+            >
+              <Plus size={18} />
+              Add {activeTab === "gallery" ? "Photo" : "Project"}
+            </button>
+          )}
         </div>
 
         {/* Content Grid */}
-        {items.length === 0 ? (
+        {activeTab === "content" ? (
+          <SiteContentEditor />
+        ) : items.length === 0 ? (
           <div className="text-center py-24">
             <ImageIcon className="mx-auto text-white/10 mb-4" size={64} />
             <p className="text-white/30 text-lg">

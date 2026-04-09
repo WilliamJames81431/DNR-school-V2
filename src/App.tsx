@@ -14,10 +14,11 @@ import {
   Menu,
   X,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Mail
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, doc } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
 
 // ─── Utility ────────────────────────────────────────────────────────────
@@ -29,6 +30,29 @@ const getDriveThumbnailUrl = (url: string) => {
     return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
   }
   return url;
+};
+
+// ─── Site Content CMS Hook ────────────────────────────────────────────────
+const defaultSiteContent = {
+  hero: { title: "The Best Education", subtitle: "For Your Child" },
+  about: { title: "About Our School", description: "D.N.R English Medium School is committed to providing a nurturing environment where students thrive academically, socially, and emotionally." },
+  contact: { phone: "+91 96767 65185", email: "info@dnremschool.com", address: "Bhimavaram, Andhra Pradesh" }
+};
+
+const useSiteContent = () => {
+  const [content, setContent] = useState(defaultSiteContent);
+
+  useEffect(() => {
+    if (!isConfigured || !db) return;
+    const unsub = onSnapshot(doc(db, "site", "content"), (snap) => {
+      if (snap.exists()) {
+        setContent((prev) => ({ ...prev, ...snap.data() }));
+      }
+    });
+    return unsub;
+  }, []);
+
+  return content;
 };
 
 // ─── Spring Physics Presets ──────────────────────────────────────────────
@@ -186,6 +210,7 @@ const Navbar = () => {
 };
 
 const Hero = () => {
+  const content = useSiteContent();
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -254,14 +279,14 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springFloaty, delay: 0.5 }}
           >
-            The Best Education <br />
+            {content.hero?.title || "The Best Education"} <br />
             <motion.span 
               className="text-brand-orange text-shadow-sm inline-block"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...springBouncy, delay: 0.8 }}
             >
-              For Your Child
+              {content.hero?.subtitle || "For Your Child"}
             </motion.span>
           </motion.h1>
           <motion.p 
@@ -461,6 +486,30 @@ const AtalLab = () => {
             ))}
           </motion.div>
         </div>
+      </div>
+    </section>
+  );
+};
+
+const AboutUs = () => {
+  const content = useSiteContent();
+  return (
+    <section id="about" className="py-24 bg-brand-burgundy/95 text-white overflow-hidden relative">
+      <FloatingOrbs />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div 
+          className="text-center max-w-4xl mx-auto bg-white/5 border border-white/10 p-12 rounded-3xl backdrop-blur-sm shadow-2xl"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={springFloaty}
+        >
+          <h2 className="text-brand-yellow font-bold text-sm tracking-widest uppercase mb-4">Discover DNR</h2>
+          <h3 className="text-4xl md:text-5xl font-bold mb-8 leading-tight text-white drop-shadow-md">{content.about?.title || "About Our School"}</h3>
+          <p className="text-lg md:text-xl text-white/80 leading-relaxed whitespace-pre-line">
+            {content.about?.description || "D.N.R English Medium School is committed to providing a nurturing environment where students thrive academically, socially, and emotionally."}
+          </p>
+        </motion.div>
       </div>
     </section>
   );
@@ -698,12 +747,7 @@ const Gallery = () => {
 };
 
 const Contact = () => {
-  const contacts = [
-    { label: "General Inquiry / Registration", numbers: ["9676765185", "7893040993"] },
-    { label: "Grades 1-5", numbers: ["9849934173"] },
-    { label: "Grades 6-10", numbers: ["8686666390"] },
-    { label: "Nursery / LKG / UKG", numbers: ["9704957727"] },
-  ];
+  const content = useSiteContent();
 
   return (
     <section id="admissions" className="py-24 bg-brand-burgundy text-white overflow-hidden">
@@ -732,31 +776,45 @@ const Contact = () => {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              {contacts.map((c, i) => (
-                <motion.div 
-                  key={i} 
-                  className="p-6 bg-white/5 rounded-2xl shadow-sm border border-white/10 hover-lift"
-                  variants={staggerItem}
-                  whileHover={{ x: 8 }}
-                  transition={springBouncy}
-                >
-                  <h4 className="text-brand-yellow font-bold mb-3">{c.label}</h4>
-                  <div className="flex flex-wrap gap-4">
-                    {c.numbers.map((num, idx) => (
-                      <motion.a 
-                        key={idx} 
-                        href={`tel:+91${num}`}
-                        className="flex items-center gap-2 text-white/80 hover:text-brand-orange font-medium transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        transition={springSnappy}
-                      >
-                        <Phone size={18} className="text-brand-orange" />
-                        +91 {num}
-                      </motion.a>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
+              <motion.div 
+                className="p-6 bg-white/5 rounded-2xl shadow-sm border border-white/10 hover-lift"
+                variants={staggerItem}
+                whileHover={{ x: 8 }}
+                transition={springBouncy}
+              >
+                <h4 className="text-brand-yellow font-bold mb-3">Phone Number</h4>
+                <div className="flex flex-wrap gap-4">
+                  <motion.a 
+                    href={`tel:${content.contact?.phone || ""}`}
+                    className="flex items-center gap-2 text-white/80 hover:text-brand-orange font-medium transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    transition={springSnappy}
+                  >
+                    <Phone size={18} className="text-brand-orange" />
+                    {content.contact?.phone || "+91 96767 65185"}
+                  </motion.a>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                className="p-6 bg-white/5 rounded-2xl shadow-sm border border-white/10 hover-lift"
+                variants={staggerItem}
+                whileHover={{ x: 8 }}
+                transition={springBouncy}
+              >
+                <h4 className="text-brand-yellow font-bold mb-3">Email Address</h4>
+                <div className="flex flex-wrap gap-4">
+                  <motion.a 
+                    href={`mailto:${content.contact?.email || ""}`}
+                    className="flex items-center gap-2 text-white/80 hover:text-brand-orange font-medium transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    transition={springSnappy}
+                  >
+                    <Mail size={18} className="text-brand-orange" />
+                    {content.contact?.email || "info@dnremschool.com"}
+                  </motion.a>
+                </div>
+              </motion.div>
             </motion.div>
             
             <motion.div 
@@ -776,9 +834,8 @@ const Contact = () => {
                 </motion.div>
                 <div>
                   <h4 className="font-bold text-xl mb-2">Our Location</h4>
-                  <p className="text-white/90">
-                    D.N.R. College Association, <br />
-                    Bhimavaram, Andhra Pradesh - 534202
+                  <p className="text-white/90 whitespace-pre-line">
+                    {content.contact?.address || "D.N.R. College Association, Bhimavaram, AP - 534202"}
                   </p>
                 </div>
               </div>
@@ -917,6 +974,7 @@ export default function App() {
     <div className="min-h-screen">
       <Navbar />
       <Hero />
+      <AboutUs />
       <Academics />
       <Gallery />
       <AtalLab />
