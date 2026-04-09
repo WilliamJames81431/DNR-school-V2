@@ -15,9 +15,10 @@ import {
   X,
   ChevronRight,
   Sparkles,
-  Mail
+  Mail,
+  ArrowLeft
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { collection, onSnapshot, doc } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
 
@@ -649,9 +650,9 @@ const Academics = () => {
 };
 
 const Gallery = () => {
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
 
-  const fallbackImages = [
+  const fallbackImages: { url: string; title: string; category: string; youtubeUrl?: string }[] = [
     { url: "/festival-1.jpg", title: "Festival Celebration", category: "Events" },
     { url: "/science-fair.jpg", title: "Science Fair", category: "Activities" },
     { url: "/sports-meet.jpg", title: "Sports Meet", category: "Sports" },
@@ -662,12 +663,12 @@ const Gallery = () => {
     { url: "/hero-bg.jpg", title: "Our Campus", category: "Campus" },
   ];
 
-  const [firebaseImages, setFirebaseImages] = useState<{ url: string; title: string; category: string }[]>([]);
+  const [firebaseImages, setFirebaseImages] = useState<{ url: string; title: string; category: string; youtubeUrl?: string }[]>([]);
 
   useEffect(() => {
     if (!isConfigured || !db) return;
     const unsub = onSnapshot(collection(db, "gallery"), (snap) => {
-      const items = snap.docs.map((d) => d.data() as { url: string; title: string; category: string });
+      const items = snap.docs.map((d) => d.data() as { url: string; title: string; category: string; youtubeUrl?: string });
       setFirebaseImages(items);
     }, (error) => {
       console.error("Firebase fetch error:", error);
@@ -677,12 +678,23 @@ const Gallery = () => {
 
   const images = firebaseImages.length > 0 ? firebaseImages : fallbackImages;
 
-  const loadMore = () => {
-    setVisibleCount(prev => Math.min(prev + 3, images.length));
-  };
+  // Group images into albums
+  const albums = useMemo(() => {
+    const grouped = images.reduce<{ [key: string]: typeof images }>((acc, img) => {
+      if (!acc[img.category]) acc[img.category] = [];
+      acc[img.category].push(img);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped).map(([category, items]) => ({
+      category,
+      coverImage: items[0].url,
+      items
+    }));
+  }, [images]);
 
   return (
-    <section id="gallery" className="py-24 bg-brand-brown-red text-white overflow-hidden">
+    <section id="gallery" className="py-24 bg-brand-brown-red text-white overflow-hidden relative">
       <FloatingOrbs />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
@@ -706,17 +718,18 @@ const Gallery = () => {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
         >
-          {images.slice(0, visibleCount).map((img, idx) => (
+          {albums.map((album, idx) => (
             <motion.div
               key={idx}
               variants={staggerItem}
               whileHover={{ y: -12, scale: 1.03 }}
               transition={springBouncy}
+              onClick={() => setActiveAlbum(album.category)}
               className="group relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] cursor-pointer hover-lift"
             >
               <img
-                src={getDriveThumbnailUrl(img.url)}
-                alt={img.title}
+                src={getDriveThumbnailUrl(album.coverImage)}
+                alt={album.category}
                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 referrerPolicy="no-referrer"
               />
@@ -724,36 +737,68 @@ const Gallery = () => {
                 <motion.div 
                   className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out"
                 >
-                  <span className="text-brand-yellow text-xs font-bold uppercase tracking-widest mb-2 inline-block px-2 py-0.5 bg-white/10 rounded backdrop-blur-md">
-                    {img.category}
+                  <span className="text-brand-yellow text-xs font-bold uppercase tracking-widest mb-2 inline-block px-2 py-0.5 bg-white/10 rounded backdrop-blur-md shadow-sm">
+                    {album.items.length} Items
                   </span>
-                  <h4 className="text-white font-bold text-2xl leading-tight drop-shadow-lg">{img.title}</h4>
+                  <h4 className="text-white font-bold text-2xl leading-tight drop-shadow-lg">{album.category}</h4>
                 </motion.div>
               </div>
             </motion.div>
           ))}
         </motion.div>
-
-        {visibleCount < images.length && (
-          <motion.div 
-            className="mt-16 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={springGentle}
-          >
-            <motion.button
-              onClick={loadMore}
-              whileHover={{ scale: 1.08, y: -3 }}
-              whileTap={{ scale: 0.95 }}
-              transition={springBouncy}
-              className="px-8 py-3 bg-brand-orange text-white rounded-full font-bold hover:bg-brand-yellow hover:text-brand-burgundy transition-all shadow-lg"
-            >
-              Load More Photos
-            </motion.button>
-          </motion.div>
-        )}
       </div>
+
+      {/* Album Modal */}
+      {activeAlbum && (
+        <div className="fixed inset-0 z-[100] bg-brand-burgundy/95 backdrop-blur-xl overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 py-12 flex flex-col min-h-screen">
+            <button 
+              onClick={() => setActiveAlbum(null)} 
+              className="mb-8 self-start text-brand-orange hover:text-white flex items-center gap-2 font-bold transition-colors"
+            >
+              <ArrowLeft /> Back to Albums
+            </button>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 flex items-center gap-4">
+              <span className="bg-brand-orange text-white px-4 py-1 rounded-xl text-lg uppercase tracking-widest font-black shadow-lg">Album</span>
+              {activeAlbum}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {albums.find(a => a.category === activeAlbum)?.items.map((item, idx) => {
+                const CardWrapper = item.youtubeUrl ? motion.a : motion.div;
+                const wrapperProps = item.youtubeUrl ? { href: item.youtubeUrl, target: "_blank", rel: "noopener noreferrer" } : {};
+                return (
+                  <CardWrapper 
+                    key={idx} 
+                    {...wrapperProps} 
+                    className="group relative block rounded-3xl overflow-hidden shadow-2xl xl:aspect-[4/3] aspect-[4/3] hover-lift cursor-pointer"
+                  >
+                    <img 
+                      src={getDriveThumbnailUrl(item.url)} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 transition-colors duration-500 group-hover:from-black/90"></div>
+                    {item.youtubeUrl && (
+                      <div className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20 transition-transform duration-500 hover:scale-125">
+                        <Youtube size={24} fill="currentColor" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-6 left-6 text-white z-20">
+                      <h5 className="text-xl font-bold">{item.title}</h5>
+                    </div>
+                  </CardWrapper>
+                );
+              })}
+            </div>
+            
+            {!albums.find(a => a.category === activeAlbum)?.items?.length && (
+               <p className="text-white/50 text-center py-20">No media found in this album.</p>
+            )}
+            
+          </div>
+        </div>
+      )}
     </section>
   );
 };

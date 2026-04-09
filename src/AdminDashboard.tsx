@@ -132,21 +132,19 @@ function UploadModal({
             />
           </div>
 
-          {/* Optional YouTube URL for Projects */}
-          {type === "project" && (
-            <div>
-              <label className="block text-white/70 text-sm font-medium mb-2">
-                YouTube Video Link (Optional)
-              </label>
-              <input
-                type="url"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="https://youtube.com/watch?v=..."
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
-              />
-            </div>
-          )}
+          {/* Optional YouTube URL */}
+          <div>
+            <label className="block text-white/70 text-sm font-medium mb-2">
+              YouTube Video Link (Optional)
+            </label>
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
+            />
+          </div>
 
           <button
             type="submit"
@@ -352,6 +350,7 @@ export default function AdminDashboard() {
         url,
         title,
         category: categoryOrTag,
+        youtubeUrl: youtubeUrl || "",
         createdAt: serverTimestamp(),
       });
     } else {
