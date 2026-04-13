@@ -375,7 +375,81 @@ const Hero = () => {
   );
 };
 
-const FacilityDetailModal = ({ facility, onClose }: { facility: any, onClose: () => void }) => {
+const ProjectVideoModal = ({ videoUrl, onClose }: { videoUrl: string, onClose: () => void }) => {
+  if (!videoUrl) return null;
+  const videoId = videoUrl.includes('v=') ? videoUrl.split('v=')[1].split('&')[0] : videoUrl.split('/').pop();
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl">
+      <motion.div 
+        className="w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-[0_0_100px_rgba(255,140,0,0.3)] relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 z-50 bg-white/10 hover:bg-brand-orange text-white p-3 rounded-full transition-all"
+        >
+          <X size={24} />
+        </button>
+        <iframe 
+          className="w-full h-full border-0"
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          title="Project Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </motion.div>
+    </div>
+  );
+};
+
+const ProjectCard = ({ project, onClick }: { project: any, onClick: (url: string) => void }) => {
+  return (
+    <motion.div 
+      variants={staggerItem}
+      whileHover={{ scale: 1.05, y: -10 }}
+      transition={springBouncy}
+      onClick={() => project.youtubeUrl && onClick(project.youtubeUrl)}
+      className={`group relative block rounded-3xl overflow-hidden shadow-lg h-64 hover-lift cursor-pointer`}
+    >
+      <img 
+        src={getDriveThumbnailUrl(project.image)} 
+        alt={project.title}
+        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+        referrerPolicy="no-referrer"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 transition-colors duration-500 group-hover:from-black/90"></div>
+      
+      {project.youtubeUrl && (
+        <>
+          <motion.div 
+            className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20"
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Youtube size={24} fill="currentColor" />
+          </motion.div>
+          <div className="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+            <div className="flex flex-col items-center gap-2">
+              <PlayCircle size={60} className="text-white drop-shadow-2xl" />
+              <span className="text-white font-bold text-lg tracking-wider uppercase">Watch Video</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      <div className="absolute bottom-6 left-6 text-white z-20">
+        <span className="text-xs font-bold bg-brand-orange px-2 py-1 rounded mb-2 inline-block">
+          {project.tag}
+        </span>
+        <h5 className="text-xl font-bold">{project.title}</h5>
+      </div>
+    </motion.div>
+  );
+};
+
+const FacilityDetailModal = ({ facility, projects, onOpenVideo, onClose }: { facility: any, projects: any[], onOpenVideo: (url: string) => void, onClose: () => void }) => {
   if (!facility) return null;
 
   return (
@@ -421,21 +495,22 @@ const FacilityDetailModal = ({ facility, onClose }: { facility: any, onClose: ()
         </div>
 
         {/* Details Content */}
-        <div className="md:w-1/2 p-8 md:p-12 overflow-y-auto bg-brand-burgundy/50 backdrop-blur-sm">
+        <div className="md:w-1/2 p-8 md:p-12 overflow-y-auto bg-brand-burgundy/50 backdrop-blur-sm custom-scrollbar">
           <div className="space-y-8">
             <section>
               <h4 className="text-brand-orange font-black uppercase tracking-widest text-xs mb-4">Facility Overview</h4>
               <p className="text-white/90 text-lg font-medium leading-relaxed">{facility.longDesc}</p>
             </section>
             
-            {facility.imageUrl && facility.videoUrl && (
-              <section className="rounded-2xl overflow-hidden border border-white/10 shadow-xl">
-                 <img 
-                  src={getDriveThumbnailUrl(facility.imageUrl)} 
-                  alt="Environmental Detail"
-                  className="w-full aspect-video object-cover"
-                  referrerPolicy="no-referrer"
-                />
+            {/* Facility Linked Projects */}
+            {projects.length > 0 && (
+              <section className="pt-8 border-t border-white/10">
+                <h4 className="text-brand-yellow font-black uppercase tracking-widest text-xs mb-6">Lab Projects & Innovations</h4>
+                <div className="grid grid-cols-1 gap-6">
+                  {projects.map((project: any, idx: number) => (
+                    <ProjectCard key={project.id || idx} project={project} onClick={onOpenVideo} />
+                  ))}
+                </div>
               </section>
             )}
             
@@ -457,14 +532,18 @@ const FacilityDetailModal = ({ facility, onClose }: { facility: any, onClose: ()
 const LabsFacilities = () => {
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
   const [facilities, setFacilities] = useState<any[]>([]);
+  const [firebaseProjects, setFirebaseProjects] = useState<any[]>([]);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isConfigured || !db) return;
-    const unsub = onSnapshot(collection(db, "facilities"), (snap) => {
-      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setFacilities(items);
+    const unsubFac = onSnapshot(collection(db, "facilities"), (snap) => {
+      setFacilities(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
-    return unsub;
+    const unsubProj = onSnapshot(collection(db, "projects"), (snap) => {
+      setFirebaseProjects(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+    return () => { unsubFac(); unsubProj(); };
   }, []);
 
   const getIcon = (iconName: string) => {
@@ -476,41 +555,37 @@ const LabsFacilities = () => {
       case "Cast": return <Cast />;
       case "Gamepad2": return <Gamepad2 />;
       case "BookOpen": return <BookOpen />;
+      case "Music": return <Music />;
+      case "Palette": return <Palette />;
+      case "Trophy": return <Trophy />;
+      case "Radio": return <Radio />;
       default: return <Database />;
     }
   };
 
-  const displayItems = facilities.length > 0 ? facilities : [
+  const defaultCategories = [
     { title: "Science Lab", desc: "Hands-on experiments in Physics, Chemistry, and Biology.", iconName: "Beaker" },
     { title: "Math Lab", desc: "Making numbers come alive with practical mental tools.", iconName: "Calculator" },
     { title: "Atal Lab", desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing.", iconName: "Cpu" },
   ];
 
-  const projects = facilities.filter(f => f.category === "Project") || []; // Or fetch separately if needed 
-  // Let's keep the project fetching logic clean
-  const [firebaseProjects, setFirebaseProjects] = useState<any[]>([]);
-  useEffect(() => {
-    if (!isConfigured || !db) return;
-    const unsub = onSnapshot(collection(db, "projects"), (snap) => {
-      setFirebaseProjects(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, []);
-  const displayProjects = firebaseProjects.length > 0 ? firebaseProjects : [
+  const displayItems = facilities.length > 0 ? facilities : defaultCategories;
+  const projects = firebaseProjects.length > 0 ? firebaseProjects : [
     { title: "Smart Bell System", image: "/atl-project-1.jpg", tag: "Automation" },
     { title: "Rain Detection Project", image: "/atl-project-2.jpg", tag: "Sensors" },
   ];
 
   return (
-    <section id="labs" className="py-24 bg-brand-brown-red text-white overflow-hidden">
+    <section id="labs" className="py-24 bg-brand-brown-red text-white overflow-hidden relative">
       <FloatingOrbs />
+      {activeVideo && <ProjectVideoModal videoUrl={activeVideo} onClose={() => setActiveVideo(null)} />}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={springFloaty}
         >
           <motion.h2 
             className="text-brand-yellow font-bold text-sm tracking-widest uppercase mb-2"
@@ -568,6 +643,8 @@ const LabsFacilities = () => {
         {selectedFacility && (
           <FacilityDetailModal 
             facility={selectedFacility} 
+            projects={firebaseProjects.filter(p => p.facilityId === selectedFacility.id)}
+            onOpenVideo={setActiveVideo}
             onClose={() => setSelectedFacility(null)} 
           />
         )}
@@ -589,60 +666,9 @@ const LabsFacilities = () => {
             </motion.div>
             Student Innovations
           </motion.h4>
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-          >
-            {projects.map((project: any, idx: number) => {
-              const CardWrapper = project.youtubeUrl ? motion.a : motion.div;
-              const wrapperProps = project.youtubeUrl ? { href: project.youtubeUrl, target: "_blank", rel: "noopener noreferrer" } : {};
-              
-              return (
-              <CardWrapper 
-                key={idx}
-                {...wrapperProps}
-                variants={staggerItem}
-                whileHover={{ scale: 1.05, y: -10 }}
-                transition={springBouncy}
-                className="group relative block rounded-3xl overflow-hidden shadow-lg h-64 hover-lift"
-              >
-                <img 
-                  src={getDriveThumbnailUrl(project.image)} 
-                  alt={project.title}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 transition-colors duration-500 group-hover:from-black/90"></div>
-                
-                {project.youtubeUrl && (
-                  <>
-                    <motion.div 
-                      className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20"
-                      animate={{ scale: [1, 1.15, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <Youtube size={24} fill="currentColor" />
-                    </motion.div>
-                    <div className="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
-                      <div className="flex flex-col items-center gap-2">
-                        <PlayCircle size={60} className="text-white drop-shadow-2xl" />
-                        <span className="text-white font-bold text-lg tracking-wider uppercase">Watch Video</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div className="absolute bottom-6 left-6 text-white z-20">
-                  <span className="text-xs font-bold bg-brand-orange px-2 py-1 rounded mb-2 inline-block">
-                    {project.tag}
-                  </span>
-                  <h5 className="text-xl font-bold">{project.title}</h5>
-                </div>
-              </CardWrapper>
-            )})}
+            {projects.map((project: any, idx: number) => (
+              <ProjectCard key={project.id || idx} project={project} onClick={setActiveVideo} />
+            ))}
           </motion.div>
         </div>
       </div>

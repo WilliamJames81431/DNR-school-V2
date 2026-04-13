@@ -28,7 +28,18 @@ import {
   Bell,
   Monitor,
   Video,
-  Database
+  Database,
+  Beaker,
+  Calculator,
+  Cast,
+  Gamepad2,
+  BookOpen,
+  Music,
+  Palette,
+  Trophy,
+  Mic2 as Microscope, // Lucide doesn't have a direct Microscope, using Mic2 or Microscope if available
+  Radio,
+  AtSign as Atom
 } from "lucide-react";
 
 interface GalleryItem {
@@ -44,6 +55,8 @@ interface ProjectItem {
   image: string;
   title: string;
   tag: string;
+  youtubeUrl?: string;
+  facilityId?: string;
   createdAt: unknown;
 }
 
@@ -58,20 +71,106 @@ interface FacilityItem {
   createdAt: unknown;
 }
 
-// ─── Upload Modal ────────────────────────────────────────────────────────────
+// ─── Icon Picker Component ──────────────────────────────────────────────────
+const ICON_OPTIONS = [
+  { name: "Beaker", icon: <Beaker size={20} /> },
+  { name: "Calculator", icon: <Calculator size={20} /> },
+  { name: "Cpu", icon: <Cpu size={20} /> },
+  { name: "Monitor", icon: <Monitor size={20} /> },
+  { name: "Cast", icon: <Cast size={20} /> },
+  { name: "Gamepad2", icon: <Gamepad2 size={20} /> },
+  { name: "BookOpen", icon: <BookOpen size={20} /> },
+  { name: "Music", icon: <Music size={20} /> },
+  { name: "Palette", icon: <Palette size={20} /> },
+  { name: "Trophy", icon: <Trophy size={20} /> },
+  { name: "Radio", icon: <Radio size={20} /> },
+  { name: "Database", icon: <Database size={20} /> },
+];
+
+function IconPicker({ selected, onChange }: { selected: string, onChange: (name: string) => void }) {
+  return (
+    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 p-4 bg-black/20 border border-white/10 rounded-2xl">
+      {ICON_OPTIONS.map((opt) => (
+        <button
+          key={opt.name}
+          type="button"
+          onClick={() => onChange(opt.name)}
+          className={`p-3 rounded-xl flex items-center justify-center transition-all ${
+            selected === opt.name 
+              ? "bg-brand-orange text-white shadow-[0_0_15px_rgba(255,140,0,0.5)]" 
+              : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+          }`}
+          title={opt.name}
+        >
+          {opt.icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function FacilityForm({ onAdd, convertToDirectLink }: { onAdd: (data: any) => Promise<void>, convertToDirectLink: (url: string) => string }) {
+  const [selectedIcon, setSelectedIcon] = useState("Beaker");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
+    try {
+      await onAdd({
+        title: formData.get("title"),
+        desc: formData.get("desc"),
+        longDesc: formData.get("longDesc"),
+        iconName: selectedIcon,
+        imageUrl: convertToDirectLink(formData.get("imageUrl") as string),
+        videoUrl: formData.get("videoUrl"),
+        createdAt: serverTimestamp(),
+      });
+      form.reset();
+      setSelectedIcon("Beaker");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:col-span-2 space-y-4">
+        <label className="block text-white/70 text-sm font-medium">Select Representation Icon</label>
+        <IconPicker selected={selectedIcon} onChange={setSelectedIcon} />
+      </div>
+      
+      <input name="title" placeholder="Facility Title (e.g. Science Lab)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" required />
+      <input name="imageUrl" placeholder="Image URL (Google Drive Link)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" required />
+      <input name="videoUrl" placeholder="YouTube Video URL (Optional)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" />
+      <textarea name="desc" placeholder="Short Description" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white md:col-span-2" required />
+      <textarea name="longDesc" placeholder="Long Detailed Description" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white md:col-span-2 h-32" required />
+      <button type="submit" disabled={loading} className="bg-brand-orange text-white py-3 rounded-xl font-bold md:col-span-2 hover:bg-brand-yellow transition-all flex items-center justify-center gap-2">
+        {loading ? <Loader2 className="animate-spin" size={20} /> : "Create Facility"}
+      </button>
+    </form>
+  );
+}
+
 function UploadModal({
   type,
   onClose,
   onUpload,
+  facilities,
 }: {
   type: "gallery" | "project";
   onClose: () => void;
-  onUpload: (url: string, title: string, categoryOrTag: string, youtubeUrl?: string) => Promise<void>;
+  onUpload: (url: string, title: string, categoryOrTag: string, youtubeUrl?: string, facilityId?: string) => Promise<void>;
+  facilities?: FacilityItem[];
 }) {
   const [imageUrl, setImageUrl] = useState("");
   const [title, setTitle] = useState("");
   const [categoryOrTag, setCategoryOrTag] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [facilityId, setFacilityId] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,7 +178,7 @@ function UploadModal({
     if (!imageUrl || !title || !categoryOrTag) return;
     setUploading(true);
     try {
-      await onUpload(imageUrl, title, categoryOrTag, youtubeUrl);
+      await onUpload(imageUrl, title, categoryOrTag, youtubeUrl, facilityId);
       onClose();
     } catch (err) {
       console.error("Upload failed:", err);
@@ -160,6 +259,27 @@ function UploadModal({
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-brand-orange transition-all"
             />
           </div>
+
+          {/* Optional Facility Link */}
+          {type === "project" && facilities && (
+            <div>
+              <label className="block text-white/70 text-sm font-medium mb-2">
+                Link to Lab/Facility (Optional)
+              </label>
+              <select
+                value={facilityId}
+                onChange={(e) => setFacilityId(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white focus:outline-none focus:border-brand-orange transition-all"
+              >
+                <option value="" className="bg-brand-burgundy text-white">No Link (General Project)</option>
+                {facilities.map((fac) => (
+                  <option key={fac.id} value={fac.id} className="bg-brand-burgundy text-white">
+                    {fac.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <button
             type="submit"
@@ -379,7 +499,7 @@ export default function AdminDashboard() {
     setNewNotice("");
   };
 
-  const handleUpload = async (rawUrl: string, title: string, categoryOrTag: string, youtubeUrl?: string) => {
+  const handleUpload = async (rawUrl: string, title: string, categoryOrTag: string, youtubeUrl?: string, facilityId?: string) => {
     if (!db) return;
 
     const url = convertToDirectLink(rawUrl);
@@ -398,6 +518,7 @@ export default function AdminDashboard() {
         title,
         tag: categoryOrTag,
         youtubeUrl: youtubeUrl || "",
+        facilityId: facilityId || "",
         createdAt: serverTimestamp(),
       });
     }
@@ -598,6 +719,7 @@ export default function AdminDashboard() {
           type={activeTab === "gallery" ? "gallery" : "project"}
           onClose={() => setShowUpload(false)}
           onUpload={handleUpload}
+          facilities={facilities}
         />
       )}
 
@@ -608,38 +730,13 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Plus className="text-brand-orange" /> Add New Facility
             </h2>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              const form = e.target as HTMLFormElement;
-              const formData = new FormData(form);
-              if (!db) return;
-              await addDoc(collection(db, "facilities"), {
-                title: formData.get("title"),
-                desc: formData.get("desc"),
-                longDesc: formData.get("longDesc"),
-                iconName: formData.get("iconName"),
-                imageUrl: convertToDirectLink(formData.get("imageUrl") as string),
-                videoUrl: formData.get("videoUrl"),
-                createdAt: serverTimestamp(),
-              });
-              form.reset();
-            }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input name="title" placeholder="Facility Title (e.g. Science Lab)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" required />
-              <select name="iconName" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white/50" required>
-                <option value="Beaker">Science/Beaker Icon</option>
-                <option value="Calculator">Math/Calculator Icon</option>
-                <option value="Cpu">ATL/CPU Icon</option>
-                <option value="Monitor">Computer/Monitor Icon</option>
-                <option value="Cast">Smart Class/Cast Icon</option>
-                <option value="Gamepad2">Games/Gamepad Icon</option>
-                <option value="BookOpen">Library/Book Icon</option>
-              </select>
-              <input name="imageUrl" placeholder="Image URL (Google Drive Link)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" required />
-              <input name="videoUrl" placeholder="YouTube Video URL (Optional)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" />
-              <textarea name="desc" placeholder="Short Description" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white md:col-span-2" required />
-              <textarea name="longDesc" placeholder="Long Detailed Description" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white md:col-span-2 h-32" required />
-              <button type="submit" className="bg-brand-orange text-white py-3 rounded-xl font-bold md:col-span-2 hover:bg-brand-yellow transition-all">Create Facility</button>
-            </form>
+            <FacilityForm 
+              onAdd={async (data) => {
+                if (!db) return;
+                await addDoc(collection(db, "facilities"), data);
+              }}
+              convertToDirectLink={convertToDirectLink}
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-4">
