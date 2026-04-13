@@ -266,6 +266,7 @@ const Hero = () => {
 
   const bgY = useTransform(smoothScroll, [0, 1], ["0%", "30%"]);
   const textY = useTransform(smoothScroll, [0, 1], ["0%", "50%"]);
+  const imageScale = useTransform(smoothScroll, [0, 1], [1.1, 1]);
   const opacity = useTransform(smoothScroll, [0, 0.8], [1, 0]);
 
   return (
