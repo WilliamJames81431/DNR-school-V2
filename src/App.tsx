@@ -16,7 +16,11 @@ import {
   ChevronRight,
   Sparkles,
   Mail,
-  ArrowLeft
+  ArrowLeft,
+  Users,
+  Award,
+  CheckCircle,
+  PlayCircle
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { collection, onSnapshot, doc } from "firebase/firestore";
@@ -484,9 +488,21 @@ const AtalLab = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 transition-colors duration-500 group-hover:from-black/90"></div>
                 
                 {project.youtubeUrl && (
-                  <div className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20 transition-transform duration-500 hover:scale-125">
-                    <Youtube size={24} fill="currentColor" />
-                  </div>
+                  <>
+                    <motion.div 
+                      className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20"
+                      animate={{ scale: [1, 1.15, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <Youtube size={24} fill="currentColor" />
+                    </motion.div>
+                    <div className="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+                      <div className="flex flex-col items-center gap-2">
+                        <PlayCircle size={60} className="text-white drop-shadow-2xl" />
+                        <span className="text-white font-bold text-lg tracking-wider uppercase">Watch Video</span>
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 <div className="absolute bottom-6 left-6 text-white z-20">
@@ -498,6 +514,40 @@ const AtalLab = () => {
               </CardWrapper>
             )})}
           </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Achievements = () => {
+  const stats = [
+    { icon: <Users size={32} />, value: "1000+", label: "Students Enrolled" },
+    { icon: <Award size={32} />, value: "15+", label: "Years of Excellence" },
+    { icon: <Trophy size={32} />, value: "50+", label: "Awards Won" },
+    { icon: <CheckCircle size={32} />, value: "100%", label: "Result Success" },
+  ];
+
+  return (
+    <section className="py-20 bg-brand-burgundy relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {stats.map((stat, idx) => (
+            <motion.div 
+              key={idx}
+              className="flex flex-col items-center text-center p-8 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ ...springGentle, delay: idx * 0.1 }}
+            >
+              <div className="text-brand-yellow mb-4 p-4 bg-white/5 rounded-2xl">
+                {stat.icon}
+              </div>
+              <h4 className="text-4xl font-black text-white mb-2 tracking-tight">{stat.value}</h4>
+              <p className="text-white/60 font-bold uppercase text-xs tracking-widest">{stat.label}</p>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
@@ -780,9 +830,21 @@ const Gallery = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 transition-colors duration-500 group-hover:from-black/90"></div>
                     {item.youtubeUrl && (
-                      <div className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20 transition-transform duration-500 hover:scale-125">
-                        <Youtube size={24} fill="currentColor" />
-                      </div>
+                      <>
+                        <motion.div 
+                          className="absolute top-4 right-4 bg-red-600/90 p-3 rounded-full text-white shadow-xl z-20"
+                          animate={{ scale: [1, 1.15, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                          <Youtube size={24} fill="currentColor" />
+                        </motion.div>
+                        <div className="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+                          <div className="flex flex-col items-center gap-2">
+                            <PlayCircle size={60} className="text-white drop-shadow-2xl" />
+                            <span className="text-white font-bold text-lg tracking-wider uppercase">Watch Video</span>
+                          </div>
+                        </div>
+                      </>
                     )}
                     <div className="absolute bottom-6 left-6 text-white z-20">
                       <h5 className="text-xl font-bold">{item.title}</h5>
@@ -1032,6 +1094,7 @@ export default function App() {
       <Navbar />
       <Hero />
       <AboutUs />
+      <Achievements />
       <Academics />
       <Gallery />
       <AtalLab />
