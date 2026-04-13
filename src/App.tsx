@@ -70,11 +70,11 @@ const useSiteContent = () => {
   return content;
 };
 
-// ─── Spring Physics Presets ──────────────────────────────────────────────
-const springBouncy = { type: "spring" as const, stiffness: 100, damping: 15, mass: 1 };
-const springGentle = { type: "spring" as const, stiffness: 60, damping: 20, mass: 1.5 };
-const springFloaty = { type: "spring" as const, stiffness: 40, damping: 25, mass: 2 };
-const springSnappy = { type: "spring" as const, stiffness: 150, damping: 20, mass: 1 };
+// ─── Spring Physics Presets (Elastic/Snappy) ──────────────────────────────
+const springBouncy = { type: "spring" as const, stiffness: 300, damping: 12, mass: 1 };
+const springGentle = { type: "spring" as const, stiffness: 150, damping: 20, mass: 1.2 };
+const springFloaty = { type: "spring" as const, stiffness: 80, damping: 15, mass: 2 };
+const springSnappy = { type: "spring" as const, stiffness: 450, damping: 25, mass: 0.8 };
 
 // ─── Floating Orbs Background ────────────────────────────────────────────
 const FloatingOrbs = () => (
@@ -86,7 +86,7 @@ const FloatingOrbs = () => (
         x: [0, 20, 0],
         borderRadius: ["40% 60% 70% 30% / 40% 40% 60% 50%", "70% 30% 50% 50% / 30% 30% 70% 70%", "40% 60% 70% 30% / 40% 40% 60% 50%"]
       }}
-      transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
     />
     <motion.div 
       className="orb orb-yellow w-72 h-72 top-1/3 -left-10"
@@ -95,16 +95,16 @@ const FloatingOrbs = () => (
         x: [0, -30, 0],
         borderRadius: ["60% 40% 30% 70% / 60% 30% 70% 40%", "30% 70% 70% 30% / 50% 60% 30% 60%", "60% 40% 30% 70% / 60% 30% 70% 40%"]
       }}
-      transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
     />
     <motion.div 
       className="orb orb-red w-80 h-80 bottom-10 right-1/4"
       animate={{ 
         y: [0, -20, 0], 
         x: [0, -40, 0],
-        scale: [1, 1.1, 1]
+        scale: [1, 1.15, 1]
       }}
-      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
     />
   </div>
 );
@@ -380,15 +380,120 @@ const Hero = () => {
   );
 };
 
+const FacilityDetailModal = ({ facility, onClose }: { facility: any, onClose: () => void }) => {
+  if (!facility) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+      <motion.div 
+        className="bg-brand-burgundy border border-white/20 rounded-[2.5rem] overflow-hidden w-full max-w-4xl max-h-[90vh] shadow-[0_0_100px_rgba(255,140,0,0.2)] flex flex-col md:flex-row relative"
+        initial={{ scale: 0.8, opacity: 0, y: 100 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={springBouncy}
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-6 right-6 z-20 bg-black/30 hover:bg-brand-orange text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-xl"
+        >
+          <X size={24} />
+        </button>
+
+        {/* Feature Image/Visual */}
+        <div className="md:w-5/12 bg-gradient-to-br from-brand-orange to-brand-burgundy p-12 flex flex-col justify-center items-center text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 pointer-events-none grayscale">
+            <FloatingOrbs />
+          </div>
+          <div className="relative z-10">
+            <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center mb-6 backdrop-blur-md border border-white/20 mx-auto">
+              <div className="scale-[2] text-white">
+                {facility.icon}
+              </div>
+            </div>
+            <h3 className="text-3xl font-black text-white mb-2 leading-tight uppercase tracking-tighter">{facility.title}</h3>
+            <div className="w-12 h-1.5 bg-brand-yellow rounded-full mx-auto" />
+          </div>
+        </div>
+
+        {/* Details Content */}
+        <div className="md:w-7/12 p-8 md:p-12 overflow-y-auto">
+          <div className="space-y-8">
+            <section>
+              <h4 className="text-brand-orange font-black uppercase tracking-widest text-xs mb-4">Facility Overview</h4>
+              <p className="text-white text-xl font-medium leading-relaxed">{facility.longDesc}</p>
+            </section>
+            
+            <section className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <span className="block text-brand-yellow text-xs font-bold uppercase mb-1">Accessibility</span>
+                <span className="text-white font-semibold">Universal Access</span>
+              </div>
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <span className="block text-brand-yellow text-xs font-bold uppercase mb-1">Standard</span>
+                <span className="text-white font-semibold">Global Norms</span>
+              </div>
+            </section>
+            
+            <div className="pt-6">
+              <button 
+                onClick={onClose}
+                className="w-full bg-brand-orange hover:bg-white hover:text-brand-burgundy text-white py-5 rounded-3xl font-black text-lg transition-all shadow-2xl active:scale-95 uppercase tracking-tighter"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const LabsFacilities = () => {
+  const [selectedFacility, setSelectedFacility] = useState<any>(null);
+
   const categories = [
-    { icon: <Beaker className="text-brand-orange" />, title: "Science Lab", desc: "Hands-on experiments in Physics, Chemistry, and Biology." },
-    { icon: <Calculator className="text-brand-orange" />, title: "Math Lab", desc: "Making numbers come alive with practical mental tools." },
-    { icon: <Cpu className="text-brand-orange" />, title: "Atal Tinkering Lab", desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing." },
-    { icon: <div className="flex gap-1"><Monitor className="text-brand-orange" /><Wind className="text-brand-orange animate-pulse" /></div>, title: "Computer Lab (AC)", desc: "High-speed systems in a fully air-conditioned environment." },
-    { icon: <Cast className="text-brand-orange" />, title: "Smart Class", desc: "Advanced digital learning with interactive multimedia." },
-    { icon: <Gamepad2 className="text-brand-orange" />, title: "Indoor Games", desc: "Developing sportsmanship with chess, carrom, and more." },
-    { icon: <BookOpen className="text-brand-orange" />, title: "Digital Library", desc: "A vast collection of knowledge and quiet study space." },
+    { 
+      icon: <Beaker />, 
+      title: "Science Lab", 
+      desc: "Hands-on experiments in Physics, Chemistry, and Biology.",
+      longDesc: "Our state-of-the-art Composite Science Laboratory is equipped with high-precision apparatus for Physics, Chemistry, and Biology. Students engage in inquiry-based learning, conducting experiments that transform theoretical concepts into practical understanding. The lab features safety-first design with specialized workstations for all senior grade levels."
+    },
+    { 
+      icon: <Calculator />, 
+      title: "Math Lab", 
+      desc: "Making numbers come alive with practical mental tools.",
+      longDesc: "The Mathematics Lab is where abstract numbers become concrete realities. Using advanced manipulatives, geometric models, and specialized software, students explore the beauty of logic and patterns. It creates an environment where students lose their fear of math and develop deep analytical thinking skills."
+    },
+    { 
+      icon: <Cpu />, 
+      title: "Atal Tinkering Lab", 
+      desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing.",
+      longDesc: "A flagship initiative of NITI Aayog, our ATL is the heartbeat of innovation. Here, students build robotics, experiment with Internet of Things (IoT), and use 3D printers to create prototypes of real-world solutions. It's a playground for young scientists and designers to shape the future."
+    },
+    { 
+      icon: <div className="flex gap-1"><Monitor /><Wind className="animate-pulse" /></div>, 
+      title: "Computer Lab (AC)", 
+      desc: "High-speed systems in a fully air-conditioned environment.",
+      longDesc: "Our IT Innovation center features high-speed workstations with the latest software for coding, digital art, and office productivity. The lab maintains a 1:1 student-to-computer ratio and is fully climate-controlled with centralized AC to ensure a comfortable and focused learning environment during digital hours."
+    },
+    { 
+      icon: <Cast />, 
+      title: "Smart Class", 
+      desc: "Advanced digital learning with interactive multimedia.",
+      longDesc: "Every Smart Class at DNR EM School is an immersive digital theater. Equipped with high-definition projectors, interactive smartboards, and vast multimedia content, these rooms make complex topics easy to grasp through visualization. Learning here is not just an activity; it's an experience."
+    },
+    { 
+      icon: <Gamepad2 />, 
+      title: "Indoor Games", 
+      desc: "Developing sportsmanship with chess, carrom, and more.",
+      longDesc: "Mental and physical agility go hand-in-hand. Our Indoor Games facility provides a premium environment for specialized sports like Chess, Table Tennis, and Carrom. It is designed to develop concentration, strategic thinking, and emotional resilience among students through healthy competition."
+    },
+    { 
+      icon: <BookOpen />, 
+      title: "Digital Library", 
+      desc: "A vast collection of knowledge and quiet study space.",
+      longDesc: "Beyond a traditional library, our Knowledge Resource Center provides access to thousands of books and a comprehensive digital repository. With quiet study zones and comfortable reading corners, it fosters a lifelong love for reading and research in a serene, focused atmosphere."
+    },
   ];
 
   const fallbackProjects = [
@@ -431,51 +536,73 @@ const LabsFacilities = () => {
             viewport={{ once: true }}
             transition={{ ...springBouncy, delay: 0.1 }}
           >
-            World-Class Infrastructure
+            Infrastructure of Tomorrow
           </motion.h2>
-          <h3 className="text-4xl md:text-5xl font-bold mb-6">Labs & Facilities</h3>
-          <p className="text-white/70 max-w-2xl mx-auto text-lg">
-            A workspace where young minds can give shape to their ideas through hands-on learning and advanced technological resources.
+          <h3 className="text-4xl md:text-5xl font-black mb-6 uppercase tracking-tighter">Labs & Facilities</h3>
+          <p className="text-white/70 max-w-2xl mx-auto text-lg italic">
+            "Experience the pinnacle of learning infrastructure where every corner is designed for excellence."
           </p>
         </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-6 mb-20">
+        <div className="flex flex-wrap justify-center gap-8 mb-20 pointer-events-auto">
           {categories.map((cat, idx) => (
-            <motion.div 
+            <motion.button 
               key={idx}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              whileHover={{ y: -8, scale: 1.03 }}
+              whileHover={{ 
+                y: -15, 
+                scale: 1.05,
+                boxShadow: "0 25px 50px -12px rgba(255, 140, 0, 0.4)"
+              }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedFacility(cat)}
               transition={{ ...springBouncy, delay: idx * 0.05 }}
-              className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)] p-6 bg-brand-burgundy/50 rounded-2xl border border-white/5 hover:border-brand-orange/30 transition-all hover-lift"
+              className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] text-left group"
             >
-              <div 
-                className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shadow-sm mb-4"
-              >
-                {cat.icon}
+              <div className="h-full bg-white/5 backdrop-blur-md rounded-[2rem] p-8 border border-white/10 group-hover:bg-white/10 group-hover:border-brand-orange/50 transition-all shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/10 blur-[40px] rounded-full -mr-12 -mt-12 transition-all group-hover:bg-brand-orange/30"></div>
+                
+                <div className="w-16 h-16 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-6 text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all shadow-inner group-hover:shadow-[0_0_30px_rgba(255,140,0,0.5)]">
+                  {cat.icon}
+                </div>
+                
+                <h4 className="font-black text-xl mb-3 text-white uppercase tracking-tighter whitespace-nowrap">{cat.title}</h4>
+                <div className="text-sm text-white/50 mb-4 line-clamp-2 leading-tight">{cat.desc}</div>
+                
+                <div className="mt-auto flex items-center gap-2 text-brand-yellow font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  View Detail <ChevronRight size={14} />
+                </div>
               </div>
-              <h4 className="font-bold text-lg mb-2 text-brand-yellow">{cat.title}</h4>
-              <p className="text-sm text-white/60">{cat.desc}</p>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
 
+        {/* Modal Management */}
+        {selectedFacility && (
+          <FacilityDetailModal 
+            facility={selectedFacility} 
+            onClose={() => setSelectedFacility(null)} 
+          />
+        )}
+
         <div className="mb-12">
           <motion.h4 
-            className="text-2xl font-bold mb-8 flex items-center gap-2 text-brand-yellow"
+            className="text-2xl font-black mb-8 flex items-center gap-3 text-brand-yellow uppercase tracking-tighter"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={springGentle}
           >
-            <motion.span
-              animate={{ rotate: [0, 15, -15, 0] }}
+            <motion.div
+              animate={{ rotate: [0, 20, -20, 0], scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="p-2 bg-brand-orange/20 rounded-xl"
             >
-              <Cpu className="text-brand-orange" />
-            </motion.span>
-            Innovation & ATL Projects
+              <Cpu size={24} className="text-brand-orange" />
+            </motion.div>
+            Student Innovations
           </motion.h4>
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
