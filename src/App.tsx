@@ -361,7 +361,7 @@ const Hero = () => {
               School Labs
             </motion.a>
           </motion.div>
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Curved Bottom */}
