@@ -32,7 +32,8 @@ import {
   Cast,
   Wind,
   Database,
-  Radio
+  Radio,
+  Image as ImageIcon
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { collection, onSnapshot, doc } from "firebase/firestore";
