@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useScroll, useTransform, useSpring } from "motion/react";
 import { 
   Cpu, 
   Printer, 
@@ -23,7 +23,14 @@ import {
   PlayCircle,
   MessageCircle,
   Bell,
-  Megaphone
+  Megaphone,
+  Beaker,
+  Calculator,
+  Monitor,
+  BookOpen,
+  Gamepad2,
+  Cast,
+  Wind
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { collection, onSnapshot, doc } from "firebase/firestore";
@@ -72,10 +79,33 @@ const springSnappy = { type: "spring" as const, stiffness: 150, damping: 20, mas
 // ─── Floating Orbs Background ────────────────────────────────────────────
 const FloatingOrbs = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    <div className="orb orb-orange w-72 h-72 -top-20 -right-20 animate-float-slow" />
-    <div className="orb orb-yellow w-48 h-48 top-1/3 -left-10 animate-drift" style={{ animationDelay: "2s" }} />
-    <div className="orb orb-red w-56 h-56 bottom-10 right-1/4 animate-float-reverse" style={{ animationDelay: "4s" }} />
-    <div className="orb orb-orange w-32 h-32 top-1/2 right-10 animate-float" style={{ animationDelay: "1s" }} />
+    <motion.div 
+      className="orb orb-orange w-96 h-96 -top-20 -right-20"
+      animate={{ 
+        y: [0, -30, 0], 
+        x: [0, 20, 0],
+        borderRadius: ["40% 60% 70% 30% / 40% 40% 60% 50%", "70% 30% 50% 50% / 30% 30% 70% 70%", "40% 60% 70% 30% / 40% 40% 60% 50%"]
+      }}
+      transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+    />
+    <motion.div 
+      className="orb orb-yellow w-72 h-72 top-1/3 -left-10"
+      animate={{ 
+        y: [0, 40, 0], 
+        x: [0, -30, 0],
+        borderRadius: ["60% 40% 30% 70% / 60% 30% 70% 40%", "30% 70% 70% 30% / 50% 60% 30% 60%", "60% 40% 30% 70% / 60% 30% 70% 40%"]
+      }}
+      transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+    />
+    <motion.div 
+      className="orb orb-red w-80 h-80 bottom-10 right-1/4"
+      animate={{ 
+        y: [0, -20, 0], 
+        x: [0, -40, 0],
+        scale: [1, 1.1, 1]
+      }}
+      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+    />
   </div>
 );
 
@@ -113,7 +143,7 @@ const Navbar = () => {
     { name: "About Us", href: "#about" },
     { name: "Academics", href: "#academics" },
     { name: "Gallery", href: "#gallery" },
-    { name: "Atal Lab", href: "#atal" },
+    { name: "School Labs", href: "#labs" },
     { name: "Admissions", href: "#admissions" },
   ];
 
@@ -224,9 +254,16 @@ const Hero = () => {
     target: heroRef,
     offset: ["start start", "end start"]
   });
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  const bgY = useTransform(smoothScroll, [0, 1], ["0%", "30%"]);
+  const textY = useTransform(smoothScroll, [0, 1], ["0%", "50%"]);
+  const opacity = useTransform(smoothScroll, [0, 0.8], [1, 0]);
 
   return (
     <section id="home" ref={heroRef} className="relative h-screen flex items-center overflow-hidden">
@@ -316,18 +353,18 @@ const Hero = () => {
               whileHover={{ scale: 1.05, y: -3 }}
               whileTap={{ scale: 0.97 }}
               transition={springBouncy}
-              className="animate-pulse-orange bg-brand-orange text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2"
+              className="animate-pulse-orange bg-brand-orange text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 shadow-2xl"
             >
               Register Now: +91 96767 65185
             </motion.a>
             <motion.a
-              href="#atal"
+              href="#labs"
               whileHover={{ scale: 1.05, y: -3 }}
               whileTap={{ scale: 0.97 }}
               transition={springBouncy}
               className="bg-white/10 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center"
             >
-              Explore ATL Lab
+              School Labs
             </motion.a>
           </motion.div>
         </motion.div>
@@ -343,12 +380,15 @@ const Hero = () => {
   );
 };
 
-const AtalLab = () => {
+const LabsFacilities = () => {
   const categories = [
-    { icon: <Cpu className="text-brand-orange" />, title: "Electronics & Robotics", desc: "Building the future with smart machines." },
-    { icon: <Printer className="text-brand-orange" />, title: "3D Printing", desc: "Turning digital designs into physical reality." },
-    { icon: <Wifi className="text-brand-orange" />, title: "IoT (Internet of Things)", desc: "Connecting the world through smart devices." },
-    { icon: <Lightbulb className="text-brand-orange" />, title: "Design Thinking", desc: "Solving real-world problems creatively." },
+    { icon: <Beaker className="text-brand-orange" />, title: "Science Lab", desc: "Hands-on experiments in Physics, Chemistry, and Biology." },
+    { icon: <Calculator className="text-brand-orange" />, title: "Math Lab", desc: "Making numbers come alive with practical mental tools." },
+    { icon: <Cpu className="text-brand-orange" />, title: "Atal Tinkering Lab", desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing." },
+    { icon: <div className="flex gap-1"><Monitor className="text-brand-orange" /><Wind className="text-brand-orange animate-pulse" /></div>, title: "Computer Lab (AC)", desc: "High-speed systems in a fully air-conditioned environment." },
+    { icon: <Cast className="text-brand-orange" />, title: "Smart Class", desc: "Advanced digital learning with interactive multimedia." },
+    { icon: <Gamepad2 className="text-brand-orange" />, title: "Indoor Games", desc: "Developing sportsmanship with chess, carrom, and more." },
+    { icon: <BookOpen className="text-brand-orange" />, title: "Digital Library", desc: "A vast collection of knowledge and quiet study space." },
   ];
 
   const fallbackProjects = [
@@ -374,7 +414,7 @@ const AtalLab = () => {
   const projects = firebaseProjects.length > 0 ? firebaseProjects : fallbackProjects;
 
   return (
-    <section id="atal" className="py-24 bg-brand-brown-red text-white overflow-hidden">
+    <section id="labs" className="py-24 bg-brand-brown-red text-white overflow-hidden">
       <FloatingOrbs />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
@@ -391,64 +431,39 @@ const AtalLab = () => {
             viewport={{ once: true }}
             transition={{ ...springBouncy, delay: 0.1 }}
           >
-            Innovation Hub
+            World-Class Infrastructure
           </motion.h2>
-          <h3 className="text-4xl md:text-5xl font-bold mb-6">Atal Tinkering Lab (ATL)</h3>
+          <h3 className="text-4xl md:text-5xl font-bold mb-6">Labs & Facilities</h3>
           <p className="text-white/70 max-w-2xl mx-auto text-lg">
-            A workspace where young minds can give shape to their ideas through hands-on do-it-yourself mode and learn innovation skills.
+            A workspace where young minds can give shape to their ideas through hands-on learning and advanced technological resources.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
-          <motion.div 
-            className="rounded-3xl overflow-hidden shadow-2xl aspect-video bg-black/20"
-            initial={{ opacity: 0, x: -60, rotateY: 10 }}
-            whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
-            viewport={{ once: true }}
-            transition={springFloaty}
-          >
-            <iframe 
-              className="w-full h-full"
-              src="https://www.youtube.com/embed/XbWxZfjop3o" 
-              title="ATL Projects"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-            ></iframe>
-          </motion.div>
-
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-          >
-            {categories.map((cat, idx) => (
-              <motion.div 
-                key={idx}
-                variants={staggerItem}
-                whileHover={{ y: -8, scale: 1.03 }}
-                transition={springBouncy}
-                className="p-6 bg-brand-burgundy/50 rounded-2xl border border-white/5 hover:border-brand-orange/30 transition-all hover-lift"
+        <div className="flex flex-wrap justify-center gap-6 mb-20">
+          {categories.map((cat, idx) => (
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -8, scale: 1.03 }}
+              transition={{ ...springBouncy, delay: idx * 0.05 }}
+              className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)] p-6 bg-brand-burgundy/50 rounded-2xl border border-white/5 hover:border-brand-orange/30 transition-all hover-lift"
+            >
+              <div 
+                className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shadow-sm mb-4"
               >
-                <motion.div 
-                  className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shadow-sm mb-4"
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 3 + idx * 0.5, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  {cat.icon}
-                </motion.div>
-                <h4 className="font-bold text-lg mb-2 text-brand-yellow">{cat.title}</h4>
-                <p className="text-sm text-white/60">{cat.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+                {cat.icon}
+              </div>
+              <h4 className="font-bold text-lg mb-2 text-brand-yellow">{cat.title}</h4>
+              <p className="text-sm text-white/60">{cat.desc}</p>
+            </motion.div>
+          ))}
         </div>
 
         <div className="mb-12">
           <motion.h4 
-            className="text-2xl font-bold mb-8 flex items-center gap-2"
+            className="text-2xl font-bold mb-8 flex items-center gap-2 text-brand-yellow"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -458,9 +473,9 @@ const AtalLab = () => {
               animate={{ rotate: [0, 15, -15, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Trophy className="text-brand-orange" />
+              <Cpu className="text-brand-orange" />
             </motion.span>
-            Project Showcase
+            Innovation & ATL Projects
           </motion.h4>
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
@@ -1178,7 +1193,7 @@ export default function App() {
       <NoticeBoard />
       <Academics />
       <Gallery />
-      <AtalLab />
+      <LabsFacilities />
       <Contact />
       <Footer />
       <ChatBot />
