@@ -451,12 +451,23 @@ const ProjectCard = ({ project, onClick }: { project: any, onClick: (url: string
 };
 
 const FacilityDetailModal = ({ facility, projects, onOpenVideo, onClose }: { facility: any, projects: any[], onOpenVideo: (url: string) => void, onClose: () => void }) => {
+  const [activeFolder, setActiveFolder] = useState<"photos" | "videos">("photos");
   if (!facility) return null;
+
+  const photoItems = [
+    ...(facility.imageUrl ? [{ image: facility.imageUrl, title: "Main View", tag: "Overview" }] : []),
+    ...projects.filter(p => !p.youtubeUrl)
+  ];
+
+  const videoItems = [
+    ...(facility.videoUrl ? [{ youtubeUrl: facility.videoUrl, title: "Featured Video", tag: "Featured" }] : []),
+    ...projects.filter(p => p.youtubeUrl)
+  ];
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
       <motion.div 
-        className="bg-brand-burgundy border border-white/20 rounded-[2.5rem] overflow-hidden w-full max-w-5xl max-h-[90vh] shadow-[0_0_100px_rgba(255,140,0,0.2)] flex flex-col md:flex-row relative"
+        className="bg-brand-burgundy border border-white/20 rounded-[2.5rem] overflow-hidden w-full max-w-6xl max-h-[90vh] shadow-[0_0_100px_rgba(255,140,0,0.2)] flex flex-col relative"
         initial={{ scale: 0.9, opacity: 0, y: 50 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={springBouncy}
@@ -467,64 +478,90 @@ const FacilityDetailModal = ({ facility, projects, onOpenVideo, onClose }: { fac
         >
           <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
         </button>
-
-        {/* Feature Media (Image or Video) */}
-        <div className="md:w-1/2 bg-black/40 relative overflow-hidden flex flex-col min-h-[350px]">
-          {facility.videoUrl && (facility.videoUrl.includes('youtube.com') || facility.videoUrl.includes('youtu.be')) ? (
-            <div className="w-full h-full min-h-[350px]">
-              <iframe 
-                className="w-full h-full border-0"
-                src={`https://www.youtube.com/embed/${facility.videoUrl.includes('v=') ? facility.videoUrl.split('v=')[1].split('&')[0] : facility.videoUrl.split('/').pop()}`}
-                title={facility.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <img 
-              src={getDriveThumbnailUrl(facility.imageUrl)} 
-              alt={facility.title}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          )}
-          
-          <div className="p-8 bg-gradient-to-t from-black/80 to-transparent mt-auto relative z-10">
-            <h3 className="text-3xl font-black text-white mb-2 leading-tight uppercase tracking-tighter">{facility.title}</h3>
-            <div className="w-12 h-1.5 bg-brand-yellow rounded-full" />
-          </div>
-        </div>
-
-        {/* Details Content */}
-        <div className="md:w-1/2 p-8 md:p-12 overflow-y-auto bg-brand-burgundy/50 backdrop-blur-sm custom-scrollbar">
-          <div className="space-y-8">
-            <section>
-              <h4 className="text-brand-orange font-black uppercase tracking-widest text-xs mb-4">Facility Overview</h4>
-              <p className="text-white/90 text-lg font-medium leading-relaxed">{facility.longDesc}</p>
-            </section>
+        <div className="flex flex-col md:flex-row h-full overflow-hidden">
+          {/* Sidebar / Overview */}
+          <div className="md:w-1/3 bg-black/40 p-8 flex flex-col border-r border-white/10 overflow-y-auto custom-scrollbar">
+            <div className="w-16 h-1 bg-brand-yellow rounded-full mb-6" />
+            <h3 className="text-4xl font-black text-white mb-4 leading-tight uppercase tracking-tighter">{facility.title}</h3>
+            <p className="text-white/70 text-lg mb-8 leading-relaxed">
+              {facility.longDesc || facility.desc}
+            </p>
             
-            {/* Facility Linked Projects */}
-            {projects.length > 0 && (
-              <section className="pt-8 border-t border-white/10">
-                <h4 className="text-brand-yellow font-black uppercase tracking-widest text-xs mb-6">Lab Projects & Innovations</h4>
-                <div className="grid grid-cols-1 gap-6">
-                  {projects.map((project: any, idx: number) => (
-                    <ProjectCard key={project.id || idx} project={project} onClick={onOpenVideo} />
-                  ))}
+            {/* Folder Navigation */}
+            <div className="space-y-3 mt-auto">
+              <button 
+                onClick={() => setActiveFolder("photos")}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${activeFolder === "photos" ? "bg-brand-orange text-white shadow-xl" : "bg-white/5 text-white/50 hover:bg-white/10"}`}
+              >
+                <div className="flex items-center gap-3 font-bold uppercase tracking-widest text-xs">
+                  <ImageIcon size={20} /> Photos Folder
                 </div>
-              </section>
-            )}
-            
-            <div className="pt-6">
+                <span className="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full">{photoItems.length}</span>
+              </button>
+              <button 
+                onClick={() => setActiveFolder("videos")}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${activeFolder === "videos" ? "bg-brand-orange text-white shadow-xl" : "bg-white/5 text-white/50 hover:bg-white/10"}`}
+              >
+                <div className="flex items-center gap-3 font-bold uppercase tracking-widest text-xs">
+                  <Youtube size={20} /> Videos Folder
+                </div>
+                <span className="text-xs font-black bg-white/20 px-2 py-0.5 rounded-full">{videoItems.length}</span>
+              </button>
+            </div>
+
+            <div className="pt-8">
               <button 
                 onClick={onClose}
-                className="w-full bg-brand-orange hover:bg-white hover:text-brand-burgundy text-white py-5 rounded-3xl font-black text-lg transition-all shadow-2xl active:scale-95 uppercase tracking-tighter"
+                className="w-full bg-white/10 hover:bg-white hover:text-brand-burgundy text-white py-4 rounded-2xl font-black text-sm transition-all uppercase tracking-tighter"
               >
-                Close Details
+                Exit Lab
               </button>
             </div>
           </div>
+
+          {/* Folder Content Grid */}
+          <div className="md:w-2/3 p-8 overflow-y-auto custom-scrollbar bg-brand-burgundy/30">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {activeFolder === "photos" ? (
+                photoItems.length > 0 ? (
+                  photoItems.map((item, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="rounded-3xl overflow-hidden aspect-video border border-white/10 relative group"
+                    >
+                      <img 
+                        src={getDriveThumbnailUrl((item as any).image)} 
+                        alt="Gallery Detail"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-4 left-4">
+                        <p className="text-white font-bold text-sm tracking-tight">{(item as any).title}</p>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-2 py-20 text-center text-white/30 italic">No photos available in this folder yet.</div>
+                )
+              ) : (
+                videoItems.length > 0 ? (
+                  videoItems.map((item, i) => (
+                    <div key={i} className="col-span-1">
+                      <ProjectCard project={item} onClick={onOpenVideo} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 py-20 text-center text-white/30 italic">No videos available in this folder yet.</div>
+                )
+              )}
+            </div>
+          </div>
         </div>
+
       </motion.div>
     </div>
   );
@@ -570,7 +607,12 @@ const LabsFacilities = () => {
     { title: "Atal Lab", desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing.", iconName: "Cpu" },
   ];
 
-  const displayItems = facilities.length > 0 ? facilities : defaultCategories;
+  const displayItems = useMemo(() => {
+    const firestoreItems = facilities.map(f => ({ ...f, isUserAdded: true }));
+    // Filter out defaults that might have been overwritten by title if needed, 
+    // but for now just append so users can see all.
+    return [...defaultCategories, ...firestoreItems];
+  }, [facilities]);
   const projects = firebaseProjects.length > 0 ? firebaseProjects : [
     { title: "Smart Bell System", image: "/atl-project-1.jpg", tag: "Automation" },
     { title: "Rain Detection Project", image: "/atl-project-2.jpg", tag: "Sensors" },
