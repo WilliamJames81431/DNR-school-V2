@@ -30,7 +30,8 @@ import {
   BookOpen,
   Gamepad2,
   Cast,
-  Wind
+  Wind,
+  Database
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { collection, onSnapshot, doc } from "firebase/firestore";
