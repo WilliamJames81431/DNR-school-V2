@@ -271,15 +271,15 @@ const Hero = () => {
   return (
     <section id="home" ref={heroRef} className="relative h-screen flex items-center overflow-hidden">
       {/* Parallax Background */}
-      <motion.div className="absolute inset-0 z-0" style={{ y: bgY }}>
-        <img 
-          src={getDriveThumbnailUrl(content.hero?.bgImage || "/hero-bg.jpg")} 
-          alt="DNR School Campus"
-          className="w-full h-full object-cover scale-110"
-          referrerPolicy="no-referrer"
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-black/40 z-10" />
+        <motion.img 
+          src={content.hero?.bgImage || "/hero-bg.jpg"} 
+          alt="School Campus"
+          className="w-full h-full object-cover"
+          style={{ scale: imageScale, y: bgY }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40"></div>
-      </motion.div>
+      </div>
 
       {/* Floating Orbs */}
       <div className="absolute inset-0 z-[1] overflow-hidden pointer-events-none">
@@ -349,7 +349,13 @@ const Hero = () => {
               href="tel:+919676765185"
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
-              transition={springSnappy}
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                ease: "easeInOut",
+                scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              }}
               className="bg-brand-orange text-white px-10 py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-[0_20px_50px_rgba(255,140,0,0.4)]"
             >
               Register Now
@@ -568,11 +574,15 @@ const FacilityDetailModal = ({ facility, projects, onOpenVideo, onClose }: { fac
   );
 };
 
-const LabsFacilities = () => {
+const LabsFacilities = ({ onModalToggle }: { onModalToggle: (open: boolean) => void }) => {
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
   const [facilities, setFacilities] = useState<any[]>([]);
   const [firebaseProjects, setFirebaseProjects] = useState<any[]>([]);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+
+  useEffect(() => {
+    onModalToggle(!!selectedFacility || !!activeVideo);
+  }, [selectedFacility, activeVideo, onModalToggle]);
 
   useEffect(() => {
     if (!isConfigured || !db) return;
@@ -610,9 +620,11 @@ const LabsFacilities = () => {
 
   const displayItems = useMemo(() => {
     const firestoreItems = facilities.map(f => ({ ...f, isUserAdded: true }));
-    // Filter out defaults that might have been overwritten by title if needed, 
-    // but for now just append so users can see all.
-    return [...defaultCategories, ...firestoreItems];
+    // Only include defaults if a Firestore item with the same title doesn't exist
+    const filteredDefaults = defaultCategories.filter(def => 
+      !firestoreItems.some(f => f.title.toLowerCase() === def.title.toLowerCase())
+    );
+    return [...filteredDefaults, ...firestoreItems];
   }, [facilities]);
   const projects = firebaseProjects.length > 0 ? firebaseProjects : [
     { title: "Smart Bell System", image: "/atl-project-1.jpg", tag: "Automation" },
@@ -748,9 +760,13 @@ const Achievements = () => {
               viewport={{ once: true }}
               transition={{ ...springGentle, delay: idx * 0.1 }}
             >
-              <div className="text-brand-yellow mb-4 p-4 bg-white/5 rounded-2xl">
+              <motion.div 
+                className="text-brand-yellow mb-4 p-4 bg-white/5 rounded-2xl"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3 + idx, repeat: Infinity, ease: "easeInOut" }}
+              >
                 {stat.icon}
-              </div>
+              </motion.div>
               <h4 className="text-4xl font-black text-white mb-2 tracking-tight">{stat.value}</h4>
               <p className="text-white/60 font-bold uppercase text-xs tracking-widest">{stat.label}</p>
             </motion.div>
@@ -821,7 +837,7 @@ const Academics = () => {
               Academic Excellence
             </motion.h2>
             <motion.h3 
-              className="text-4xl md:text-5xl font-bold mb-8 leading-tight"
+              className="text-4xl md:text-5xl font-bold mb-8 leading-tight break-words hyphens-auto"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -1122,7 +1138,7 @@ const Contact = () => {
   const content = useSiteContent();
 
   return (
-    <section id="admissions" className="py-24 bg-brand-burgundy text-white overflow-hidden">
+    <section id="admissions" className="pt-24 pb-12 bg-brand-burgundy text-white overflow-hidden">
       <FloatingOrbs />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -1223,10 +1239,11 @@ const Contact = () => {
           >
             <iframe 
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3824.237618055655!2d81.522222!3d16.544444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a37d2a5a5a5a5a5%3A0x5a5a5a5a5a5a5a5a!2sDNR%20College%20Association!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin" 
-              className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700"
+              className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700 pointer-events-none group-hover:pointer-events-auto"
               style={{ border: 0 }} 
               allowFullScreen 
               loading="lazy"
+              title="Google Maps"
             ></iframe>
           </motion.div>
         </div>
@@ -1373,6 +1390,17 @@ const ChatBot = () => {
 };
 
 export default function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Global Scroll Lock for Modals
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isModalOpen]);
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -1382,7 +1410,7 @@ export default function App() {
       <NoticeBoard />
       <Academics />
       <Gallery />
-      <LabsFacilities />
+      <LabsFacilities onModalToggle={setIsModalOpen} />
       <Contact />
       <Footer />
       <ChatBot />
