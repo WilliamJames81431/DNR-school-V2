@@ -666,6 +666,13 @@ const LabsFacilities = () => {
             </motion.div>
             Student Innovations
           </motion.h4>
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {projects.map((project: any, idx: number) => (
               <ProjectCard key={project.id || idx} project={project} onClick={setActiveVideo} />
             ))}
