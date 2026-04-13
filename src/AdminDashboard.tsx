@@ -248,7 +248,11 @@ function SiteContentEditor() {
           </div>
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">Subtitle</label>
-            <textarea value={content?.hero?.subtitle || ""} onChange={(e) => handleChange("hero", "subtitle", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange h-24 transition-all hover:border-white/30" />
+            <input type="text" value={content?.hero?.subtitle || ""} onChange={(e) => handleChange("hero", "subtitle", e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">Hero Background Image URL (Google Drive/Link)</label>
+            <input type="text" value={content?.hero?.bgImage || ""} onChange={(e) => handleChange("hero", "bgImage", e.target.value)} placeholder="/hero-bg.jpg" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange transition-all hover:border-white/30" />
           </div>
         </div>
       </div>
@@ -304,11 +308,13 @@ function SiteContentEditor() {
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"gallery" | "projects" | "content">("gallery");
+  const [activeTab, setActiveTab] = useState<"gallery" | "projects" | "content" | "notices">("gallery");
   const [showUpload, setShowUpload] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [notices, setNotices] = useState<any[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [newNotice, setNewNotice] = useState("");
 
   // Real-time listeners
   useEffect(() => {
@@ -321,7 +327,11 @@ export default function AdminDashboard() {
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as ProjectItem));
       setProjectItems(items);
     });
-    return () => { unsubGallery(); unsubProjects(); };
+    const unsubNotices = onSnapshot(collection(db, "notices"), (snap) => {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setNotices(items);
+    });
+    return () => { unsubGallery(); unsubProjects(); unsubNotices(); };
   }, []);
 
   const handleLogout = async () => {
@@ -338,6 +348,15 @@ export default function AdminDashboard() {
       return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
     }
     return url;
+  };
+
+  const handleAddNotice = async () => {
+    if (!newNotice || !db) return;
+    await addDoc(collection(db, "notices"), {
+      text: newNotice,
+      createdAt: serverTimestamp(),
+    });
+    setNewNotice("");
   };
 
   const handleUpload = async (rawUrl: string, title: string, categoryOrTag: string, youtubeUrl?: string) => {
@@ -385,6 +404,7 @@ export default function AdminDashboard() {
     { key: "gallery" as const, label: "Gallery", icon: <ImageIcon size={18} /> },
     { key: "projects" as const, label: "ATL Projects", icon: <Cpu size={18} /> },
     { key: "content" as const, label: "Site Content", icon: <FileText size={18} /> },
+    { key: "notices" as const, label: "Notices", icon: <Bell size={18} /> },
   ];
 
   const items = activeTab === "gallery" ? galleryItems : projectItems;
@@ -438,7 +458,7 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {activeTab !== "content" && (
+          {activeTab !== "content" && activeTab !== "notices" && (
             <button
               onClick={() => setShowUpload(true)}
               className="flex items-center gap-2 bg-brand-orange text-white px-5 py-2.5 rounded-xl font-bold hover:bg-brand-yellow hover:text-brand-burgundy transition-all"
@@ -450,63 +470,105 @@ export default function AdminDashboard() {
         </div>
 
         {/* Content Grid */}
-        {activeTab === "content" ? (
-          <SiteContentEditor />
-        ) : items.length === 0 ? (
-          <div className="text-center py-24">
-            <ImageIcon className="mx-auto text-white/10 mb-4" size={64} />
-            <p className="text-white/30 text-lg">
-              No {activeTab === "gallery" ? "photos" : "projects"} yet.
-            </p>
-            <p className="text-white/20 text-sm mt-1">
-              Click "Add {activeTab === "gallery" ? "Photo" : "Project"}" to upload your first one.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map((item) => {
-              const imageUrl = "url" in item ? item.url : (item as ProjectItem).image;
-              const subtitle = "category" in item ? (item as GalleryItem).category : (item as ProjectItem).tag;
+        {activeTab === "content" && <SiteContentEditor />}
 
-              return (
-                <div
-                  key={item.id}
-                  className="group relative rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-all"
+        {activeTab === "notices" && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-xl">
+              <h2 className="text-xl font-bold text-white mb-6">Add New Notice</h2>
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  value={newNotice}
+                  onChange={(e) => setNewNotice(e.target.value)}
+                  placeholder="Enter urgent school notice here..."
+                  className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-orange"
+                />
+                <button
+                  onClick={handleAddNotice}
+                  className="bg-brand-orange hover:bg-brand-yellow text-white px-6 py-3 rounded-xl font-bold transition-all"
                 >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={convertToDirectLink(imageUrl)}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h4 className="text-white font-semibold text-sm truncate">{item.title}</h4>
-                    <span className="text-brand-orange text-xs font-medium">{subtitle}</span>
-                  </div>
+                  Add Notice
+                </button>
+              </div>
+            </div>
 
-                  {/* Delete button */}
+            <div className="grid grid-cols-1 gap-4">
+              {notices.map((notice) => (
+                <div key={notice.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center justify-between group">
+                  <p className="text-white text-lg">{notice.text}</p>
                   <button
-                    onClick={() =>
-                      handleDelete(
-                        item.id,
-                        activeTab === "gallery" ? "gallery" : "projects"
-                      )
-                    }
-                    disabled={deleting === item.id}
-                    className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white/70 p-2 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
-                    title="Delete"
+                  <button
+                    onClick={() => handleDelete(notice.id, "notices")}
+                    className="p-3 text-white/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                   >
-                    {deleting === item.id ? (
-                      <Loader2 className="animate-spin" size={16} />
-                    ) : (
-                      <Trash2 size={16} />
-                    )}
+                    <Trash2 size={20} />
                   </button>
                 </div>
-              );
-            })}
+              ))}
+              {notices.length === 0 && (
+                <p className="text-white/20 text-center py-10">No active notices.</p>
+              )}
+            </div>
           </div>
+        )}
+
+        {(activeTab === "gallery" || activeTab === "projects") && (
+          items.length === 0 ? (
+            <div className="text-center py-24">
+              <ImageIcon className="mx-auto text-white/10 mb-4" size={64} />
+              <p className="text-white/30 text-lg">
+                No {activeTab === "gallery" ? "photos" : "projects"} yet.
+              </p>
+              <p className="text-white/20 text-sm mt-1">
+                Click "Add {activeTab === "gallery" ? "Photo" : "Project"}" to upload your first one.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {items.map((item) => {
+                const imageUrl = "url" in item ? item.url : (item as ProjectItem).image;
+                const subtitle = "category" in item ? (item as GalleryItem).category : (item as ProjectItem).tag;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="group relative rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-all"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <img
+                        src={convertToDirectLink(imageUrl)}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h4 className="text-white font-semibold text-sm truncate">{item.title}</h4>
+                      <span className="text-brand-orange text-xs font-medium">{subtitle}</span>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        handleDelete(
+                          item.id,
+                          activeTab === "gallery" ? "gallery" : "projects"
+                        )
+                      }
+                      disabled={deleting === item.id}
+                      className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white/70 p-2 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                      title="Delete"
+                    >
+                      {deleting === item.id ? (
+                        <Loader2 className="animate-spin" size={16} />
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
       </main>
 

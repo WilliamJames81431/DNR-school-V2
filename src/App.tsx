@@ -20,7 +20,10 @@ import {
   Users,
   Award,
   CheckCircle,
-  PlayCircle
+  PlayCircle,
+  MessageCircle,
+  Bell,
+  Megaphone
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { collection, onSnapshot, doc } from "firebase/firestore";
@@ -39,7 +42,7 @@ const getDriveThumbnailUrl = (url: string) => {
 
 // ─── Site Content CMS Hook ────────────────────────────────────────────────
 const defaultSiteContent: any = {
-  hero: { title: "The Best Education", subtitle: "For Your Child", announcement: "ADMISSIONS OPEN 2026-2027" },
+  hero: { title: "The Best Education", subtitle: "For Your Child", announcement: "ADMISSIONS OPEN 2026-2027", bgImage: "/hero-bg.jpg" },
   about: { title: "About Our School", description: "D.N.R English Medium School is committed to providing a nurturing environment where students thrive academically, socially, and emotionally." },
   contact: { phone: "+91 96767 65185", email: "info@dnremschool.com", address: "Bhimavaram, Andhra Pradesh" }
 };
@@ -230,12 +233,12 @@ const Hero = () => {
       {/* Parallax Background */}
       <motion.div className="absolute inset-0 z-0" style={{ y: bgY }}>
         <img 
-          src="/hero-bg.jpg" 
+          src={getDriveThumbnailUrl(content.hero?.bgImage || "/hero-bg.jpg")} 
           alt="DNR School Campus"
           className="w-full h-full object-cover scale-110"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40"></div>
       </motion.div>
 
       {/* Floating Orbs */}
@@ -260,7 +263,7 @@ const Hero = () => {
       </div>
 
       <motion.div 
-        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white"
+        className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white pb-32"
         style={{ y: textY, opacity }}
       >
         <motion.div
@@ -279,7 +282,7 @@ const Hero = () => {
             {content.hero?.announcement || "ADMISSIONS OPEN 2026-2027"}
           </motion.span>
           <motion.h1 
-            className="text-5xl md:text-7xl font-bold leading-tight mb-6"
+            className="text-4xl md:text-6xl font-black leading-tight mb-6"
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springFloaty, delay: 0.5 }}
@@ -699,6 +702,52 @@ const Academics = () => {
   );
 };
 
+const NoticeBoard = () => {
+  const [notices, setNotices] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isConfigured || !db) return;
+    const unsub = onSnapshot(collection(db, "notices"), (snap) => {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setNotices(items);
+    });
+    return unsub;
+  }, []);
+
+  if (notices.length === 0) return null;
+
+  return (
+    <section className="py-12 bg-brand-orange relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center gap-8">
+        <div className="flex items-center gap-3 bg-white/20 px-6 py-3 rounded-2xl backdrop-blur-md shadow-lg border border-white/30 whitespace-nowrap">
+          <Megaphone className="text-white animate-bounce" />
+          <span className="text-white font-black uppercase tracking-tighter text-xl">Updates</span>
+        </div>
+        
+        <div className="flex-1 overflow-hidden relative group">
+          <motion.div 
+            className="flex gap-12 whitespace-nowrap"
+            animate={{ x: [0, -1000] }}
+            transition={{ 
+              duration: 30, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+          >
+            {/* Double the notices for smooth infinite loop */}
+            {[...notices, ...notices, ...notices].map((notice, idx) => (
+              <div key={idx} className="flex items-center gap-4 text-white font-semibold text-lg">
+                <div className="w-2 h-2 bg-brand-yellow rounded-full" />
+                {notice.text}
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Gallery = () => {
   const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
 
@@ -1088,6 +1137,37 @@ const Footer = () => {
   );
 };
 
+const ChatBot = () => {
+  return (
+    <motion.div 
+      className="fixed bottom-8 left-8 z-[60]"
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 2, ...springBouncy }}
+    >
+      <motion.a
+        href="https://wa.me/919676765185"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white shadow-2xl relative group"
+        whileHover={{ scale: 1.1, rotate: 10 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <MessageCircle size={32} />
+        <div className="absolute left-20 bg-white text-brand-burgundy px-4 py-2 rounded-xl text-sm font-bold shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          How can we help? Chat now!
+          <div className="absolute -left-2 top-1/2 -translate-y-1/2 border-8 border-transparent border-r-white" />
+        </div>
+        <motion.div 
+          className="absolute inset-0 bg-green-500 rounded-full -z-10"
+          animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      </motion.a>
+    </motion.div>
+  );
+};
+
 export default function App() {
   return (
     <div className="min-h-screen">
@@ -1095,11 +1175,13 @@ export default function App() {
       <Hero />
       <AboutUs />
       <Achievements />
+      <NoticeBoard />
       <Academics />
       <Gallery />
       <AtalLab />
       <Contact />
       <Footer />
+      <ChatBot />
     </div>
   );
 }
