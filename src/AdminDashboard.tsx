@@ -498,7 +498,6 @@ export default function AdminDashboard() {
                 <div key={notice.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center justify-between group">
                   <p className="text-white text-lg">{notice.text}</p>
                   <button
-                  <button
                     onClick={() => handleDelete(notice.id, "notices")}
                     className="p-3 text-white/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                   >
