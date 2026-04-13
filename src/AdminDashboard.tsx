@@ -25,6 +25,7 @@ import {
   FileText,
   Phone,
   Save,
+  Bell,
 } from "lucide-react";
 
 interface GalleryItem {
