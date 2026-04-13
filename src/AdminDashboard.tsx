@@ -26,6 +26,9 @@ import {
   Phone,
   Save,
   Bell,
+  Monitor,
+  Video,
+  Database
 } from "lucide-react";
 
 interface GalleryItem {
@@ -41,6 +44,17 @@ interface ProjectItem {
   image: string;
   title: string;
   tag: string;
+  createdAt: unknown;
+}
+
+interface FacilityItem {
+  id: string;
+  title: string;
+  desc: string;
+  longDesc: string;
+  iconName: string;
+  imageUrl: string;
+  videoUrl: string;
   createdAt: unknown;
 }
 
@@ -309,10 +323,11 @@ function SiteContentEditor() {
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"gallery" | "projects" | "content" | "notices">("gallery");
+  const [activeTab, setActiveTab] = useState<"gallery" | "projects" | "content" | "notices" | "facilities">("gallery");
   const [showUpload, setShowUpload] = useState(false);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([]);
+  const [facilities, setFacilities] = useState<FacilityItem[]>([]);
   const [notices, setNotices] = useState<any[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [newNotice, setNewNotice] = useState("");
@@ -332,7 +347,11 @@ export default function AdminDashboard() {
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setNotices(items);
     });
-    return () => { unsubGallery(); unsubProjects(); unsubNotices(); };
+    const unsubFacilities = onSnapshot(collection(db, "facilities"), (snap) => {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as FacilityItem));
+      setFacilities(items);
+    });
+    return () => { unsubGallery(); unsubProjects(); unsubNotices(); unsubFacilities(); };
   }, []);
 
   const handleLogout = async () => {
@@ -404,6 +423,7 @@ export default function AdminDashboard() {
   const tabs = [
     { key: "gallery" as const, label: "Gallery", icon: <ImageIcon size={18} /> },
     { key: "projects" as const, label: "ATL Projects", icon: <Cpu size={18} /> },
+    { key: "facilities" as const, label: "Facilities", icon: <Monitor size={18} /> },
     { key: "content" as const, label: "Site Content", icon: <FileText size={18} /> },
     { key: "notices" as const, label: "Notices", icon: <Bell size={18} /> },
   ];
@@ -579,6 +599,71 @@ export default function AdminDashboard() {
           onClose={() => setShowUpload(false)}
           onUpload={handleUpload}
         />
+      )}
+
+      {/* Facilities Management View (Simplified Editor) */}
+      {activeTab === "facilities" && (
+        <div className="max-w-4xl mx-auto space-y-8 pb-20">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm shadow-xl">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <Plus className="text-brand-orange" /> Add New Facility
+            </h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const formData = new FormData(form);
+              if (!db) return;
+              await addDoc(collection(db, "facilities"), {
+                title: formData.get("title"),
+                desc: formData.get("desc"),
+                longDesc: formData.get("longDesc"),
+                iconName: formData.get("iconName"),
+                imageUrl: convertToDirectLink(formData.get("imageUrl") as string),
+                videoUrl: formData.get("videoUrl"),
+                createdAt: serverTimestamp(),
+              });
+              form.reset();
+            }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input name="title" placeholder="Facility Title (e.g. Science Lab)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" required />
+              <select name="iconName" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white/50" required>
+                <option value="Beaker">Science/Beaker Icon</option>
+                <option value="Calculator">Math/Calculator Icon</option>
+                <option value="Cpu">ATL/CPU Icon</option>
+                <option value="Monitor">Computer/Monitor Icon</option>
+                <option value="Cast">Smart Class/Cast Icon</option>
+                <option value="Gamepad2">Games/Gamepad Icon</option>
+                <option value="BookOpen">Library/Book Icon</option>
+              </select>
+              <input name="imageUrl" placeholder="Image URL (Google Drive Link)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" required />
+              <input name="videoUrl" placeholder="YouTube Video URL (Optional)" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white" />
+              <textarea name="desc" placeholder="Short Description" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white md:col-span-2" required />
+              <textarea name="longDesc" placeholder="Long Detailed Description" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white md:col-span-2 h-32" required />
+              <button type="submit" className="bg-brand-orange text-white py-3 rounded-xl font-bold md:col-span-2 hover:bg-brand-yellow transition-all">Create Facility</button>
+            </form>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {facilities.map((fac) => (
+              <div key={fac.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-brand-orange/10 rounded-xl flex items-center justify-center text-brand-orange font-bold">
+                    {fac.iconName[0]}
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold">{fac.title}</h4>
+                    <p className="text-white/40 text-sm truncate max-w-sm">{fac.desc}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDelete(fac.id, "facilities")}
+                  className="p-3 text-white/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

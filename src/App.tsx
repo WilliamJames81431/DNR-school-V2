@@ -70,11 +70,11 @@ const useSiteContent = () => {
   return content;
 };
 
-// ─── Spring Physics Presets (Elastic/Snappy) ──────────────────────────────
-const springBouncy = { type: "spring" as const, stiffness: 300, damping: 12, mass: 1 };
-const springGentle = { type: "spring" as const, stiffness: 150, damping: 20, mass: 1.2 };
-const springFloaty = { type: "spring" as const, stiffness: 80, damping: 15, mass: 2 };
-const springSnappy = { type: "spring" as const, stiffness: 450, damping: 25, mass: 0.8 };
+// ─── Spring Physics Presets (Natural Smooth) ─────────────────────────────
+const springBouncy = { type: "spring" as const, stiffness: 200, damping: 20, mass: 1 };
+const springGentle = { type: "spring" as const, stiffness: 100, damping: 25, mass: 1 };
+const springFloaty = { type: "spring" as const, stiffness: 80, damping: 30, mass: 1.5 };
+const springSnappy = { type: "spring" as const, stiffness: 300, damping: 30, mass: 0.8 };
 
 // ─── Floating Orbs Background ────────────────────────────────────────────
 const FloatingOrbs = () => (
@@ -152,7 +152,7 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={springBouncy}
-      className={`fixed w-full z-50 backdrop-blur-md shadow-lg border-b border-white/10 transition-all duration-500 ${
+      className={`fixed w-full z-[60] backdrop-blur-md shadow-lg border-b border-white/10 transition-all duration-500 ${
         scrolled ? "bg-brand-burgundy/95 shadow-2xl" : "bg-brand-burgundy/90"
       }`}
     >
@@ -300,62 +300,56 @@ const Hero = () => {
       </div>
 
       <motion.div 
-        className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white pb-32"
+        className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white pt-20"
         style={{ y: textY, opacity }}
       >
-        <motion.div
-          initial={{ opacity: 0, x: -80 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={springFloaty}
-          className="max-w-2xl"
-        >
-          <motion.span 
-            className="inline-flex items-center gap-2 px-4 py-1 bg-brand-yellow text-brand-red font-bold rounded-full text-sm mb-6 shadow-md"
-            initial={{ opacity: 0, scale: 0, rotate: -10 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ ...springBouncy, delay: 0.3 }}
-          >
-            <Sparkles size={14} />
-            {content.hero?.announcement || "ADMISSIONS OPEN 2026-2027"}
-          </motion.span>
-          <motion.h1 
-            className="text-4xl md:text-6xl font-black leading-tight mb-6"
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...springFloaty, delay: 0.5 }}
-          >
-            {content.hero?.title || "The Best Education"} <br />
-            <motion.span 
-              className="text-brand-orange text-shadow-sm inline-block"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...springBouncy, delay: 0.8 }}
+        <div className="max-w-4xl">
+          {content.hero?.announcement && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ ...springGentle, delay: 0.5 }}
+              className="inline-flex items-center gap-2 bg-brand-yellow px-4 py-2 rounded-full mb-8 shadow-xl border border-white/20"
             >
-              {content.hero?.subtitle || "For Your Child"}
-            </motion.span>
-          </motion.h1>
-          <motion.p 
-            className="text-lg md:text-xl text-gray-200 mb-10 max-w-lg"
+              <div className="w-2 h-2 bg-brand-burgundy rounded-full animate-pulse" />
+              <span className="text-brand-burgundy font-black text-xs uppercase tracking-widest">
+                {content.hero.announcement}
+              </span>
+            </motion.div>
+          )}
+
+          <motion.h1 
+            className="text-white font-black text-5xl md:text-8xl mb-6 leading-[1] tracking-tighter"
             initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springBouncy, delay: 0.8 }}
+          >
+            {content.hero?.title || "The Best Education For Your Child"}
+          </motion.h1>
+          
+          <motion.p 
+            className="text-white/90 text-2xl md:text-3xl font-bold mb-12 max-w-2xl leading-tight"
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springGentle, delay: 1 }}
           >
-            Empowering young minds through innovation, academic excellence, and holistic development since 1985.
+            {content.hero?.subtitle}
           </motion.p>
+
           <motion.div 
-            className="flex flex-col sm:flex-row gap-4"
+            className="flex flex-col sm:flex-row gap-6"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springGentle, delay: 1.2 }}
           >
             <motion.a
               href="tel:+919676765185"
-              whileHover={{ scale: 1.05, y: -3 }}
-              whileTap={{ scale: 0.97 }}
-              transition={springBouncy}
-              className="animate-pulse-orange bg-brand-orange text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 shadow-2xl"
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              transition={springSnappy}
+              className="bg-brand-orange text-white px-10 py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-[0_20px_50px_rgba(255,140,0,0.4)]"
             >
-              Register Now: +91 96767 65185
+              Register Now
             </motion.a>
             <motion.a
               href="#labs"
@@ -384,54 +378,65 @@ const FacilityDetailModal = ({ facility, onClose }: { facility: any, onClose: ()
   if (!facility) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
       <motion.div 
-        className="bg-brand-burgundy border border-white/20 rounded-[2.5rem] overflow-hidden w-full max-w-4xl max-h-[90vh] shadow-[0_0_100px_rgba(255,140,0,0.2)] flex flex-col md:flex-row relative"
-        initial={{ scale: 0.8, opacity: 0, y: 100 }}
+        className="bg-brand-burgundy border border-white/20 rounded-[2.5rem] overflow-hidden w-full max-w-5xl max-h-[90vh] shadow-[0_0_100px_rgba(255,140,0,0.2)] flex flex-col md:flex-row relative"
+        initial={{ scale: 0.9, opacity: 0, y: 50 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={springBouncy}
       >
         <button 
           onClick={onClose}
-          className="absolute top-6 right-6 z-20 bg-black/30 hover:bg-brand-orange text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-xl"
+          className="absolute top-6 right-6 z-[1010] bg-black/50 hover:bg-brand-orange text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-xl group"
         >
-          <X size={24} />
+          <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
         </button>
 
-        {/* Feature Image/Visual */}
-        <div className="md:w-5/12 bg-gradient-to-br from-brand-orange to-brand-burgundy p-12 flex flex-col justify-center items-center text-center relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10 pointer-events-none grayscale">
-            <FloatingOrbs />
-          </div>
-          <div className="relative z-10">
-            <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center mb-6 backdrop-blur-md border border-white/20 mx-auto">
-              <div className="scale-[2] text-white">
-                {facility.icon}
-              </div>
+        {/* Feature Media (Image or Video) */}
+        <div className="md:w-1/2 bg-black/40 relative overflow-hidden flex flex-col min-h-[350px]">
+          {facility.videoUrl && (facility.videoUrl.includes('youtube.com') || facility.videoUrl.includes('youtu.be')) ? (
+            <div className="w-full h-full min-h-[350px]">
+              <iframe 
+                className="w-full h-full border-0"
+                src={`https://www.youtube.com/embed/${facility.videoUrl.includes('v=') ? facility.videoUrl.split('v=')[1].split('&')[0] : facility.videoUrl.split('/').pop()}`}
+                title={facility.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
+          ) : (
+            <img 
+              src={getDriveThumbnailUrl(facility.imageUrl)} 
+              alt={facility.title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          )}
+          
+          <div className="p-8 bg-gradient-to-t from-black/80 to-transparent mt-auto relative z-10">
             <h3 className="text-3xl font-black text-white mb-2 leading-tight uppercase tracking-tighter">{facility.title}</h3>
-            <div className="w-12 h-1.5 bg-brand-yellow rounded-full mx-auto" />
+            <div className="w-12 h-1.5 bg-brand-yellow rounded-full" />
           </div>
         </div>
 
         {/* Details Content */}
-        <div className="md:w-7/12 p-8 md:p-12 overflow-y-auto">
+        <div className="md:w-1/2 p-8 md:p-12 overflow-y-auto bg-brand-burgundy/50 backdrop-blur-sm">
           <div className="space-y-8">
             <section>
               <h4 className="text-brand-orange font-black uppercase tracking-widest text-xs mb-4">Facility Overview</h4>
-              <p className="text-white text-xl font-medium leading-relaxed">{facility.longDesc}</p>
+              <p className="text-white/90 text-lg font-medium leading-relaxed">{facility.longDesc}</p>
             </section>
             
-            <section className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <span className="block text-brand-yellow text-xs font-bold uppercase mb-1">Accessibility</span>
-                <span className="text-white font-semibold">Universal Access</span>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <span className="block text-brand-yellow text-xs font-bold uppercase mb-1">Standard</span>
-                <span className="text-white font-semibold">Global Norms</span>
-              </div>
-            </section>
+            {facility.imageUrl && facility.videoUrl && (
+              <section className="rounded-2xl overflow-hidden border border-white/10 shadow-xl">
+                 <img 
+                  src={getDriveThumbnailUrl(facility.imageUrl)} 
+                  alt="Environmental Detail"
+                  className="w-full aspect-video object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </section>
+            )}
             
             <div className="pt-6">
               <button 
@@ -450,73 +455,50 @@ const FacilityDetailModal = ({ facility, onClose }: { facility: any, onClose: ()
 
 const LabsFacilities = () => {
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
-
-  const categories = [
-    { 
-      icon: <Beaker />, 
-      title: "Science Lab", 
-      desc: "Hands-on experiments in Physics, Chemistry, and Biology.",
-      longDesc: "Our state-of-the-art Composite Science Laboratory is equipped with high-precision apparatus for Physics, Chemistry, and Biology. Students engage in inquiry-based learning, conducting experiments that transform theoretical concepts into practical understanding. The lab features safety-first design with specialized workstations for all senior grade levels."
-    },
-    { 
-      icon: <Calculator />, 
-      title: "Math Lab", 
-      desc: "Making numbers come alive with practical mental tools.",
-      longDesc: "The Mathematics Lab is where abstract numbers become concrete realities. Using advanced manipulatives, geometric models, and specialized software, students explore the beauty of logic and patterns. It creates an environment where students lose their fear of math and develop deep analytical thinking skills."
-    },
-    { 
-      icon: <Cpu />, 
-      title: "Atal Tinkering Lab", 
-      desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing.",
-      longDesc: "A flagship initiative of NITI Aayog, our ATL is the heartbeat of innovation. Here, students build robotics, experiment with Internet of Things (IoT), and use 3D printers to create prototypes of real-world solutions. It's a playground for young scientists and designers to shape the future."
-    },
-    { 
-      icon: <div className="flex gap-1"><Monitor /><Wind className="animate-pulse" /></div>, 
-      title: "Computer Lab (AC)", 
-      desc: "High-speed systems in a fully air-conditioned environment.",
-      longDesc: "Our IT Innovation center features high-speed workstations with the latest software for coding, digital art, and office productivity. The lab maintains a 1:1 student-to-computer ratio and is fully climate-controlled with centralized AC to ensure a comfortable and focused learning environment during digital hours."
-    },
-    { 
-      icon: <Cast />, 
-      title: "Smart Class", 
-      desc: "Advanced digital learning with interactive multimedia.",
-      longDesc: "Every Smart Class at DNR EM School is an immersive digital theater. Equipped with high-definition projectors, interactive smartboards, and vast multimedia content, these rooms make complex topics easy to grasp through visualization. Learning here is not just an activity; it's an experience."
-    },
-    { 
-      icon: <Gamepad2 />, 
-      title: "Indoor Games", 
-      desc: "Developing sportsmanship with chess, carrom, and more.",
-      longDesc: "Mental and physical agility go hand-in-hand. Our Indoor Games facility provides a premium environment for specialized sports like Chess, Table Tennis, and Carrom. It is designed to develop concentration, strategic thinking, and emotional resilience among students through healthy competition."
-    },
-    { 
-      icon: <BookOpen />, 
-      title: "Digital Library", 
-      desc: "A vast collection of knowledge and quiet study space.",
-      longDesc: "Beyond a traditional library, our Knowledge Resource Center provides access to thousands of books and a comprehensive digital repository. With quiet study zones and comfortable reading corners, it fosters a lifelong love for reading and research in a serene, focused atmosphere."
-    },
-  ];
-
-  const fallbackProjects = [
-    { title: "Smart Bell System", image: "/atl-project-1.jpg", tag: "Automation" },
-    { title: "Rain Detection Project", image: "/atl-project-2.jpg", tag: "Sensors" },
-    { title: "Solar Tracker", image: "/atl-project-3.jpg", tag: "Renewable" },
-    { title: "IoT Innovation", image: "/atl-project-4.jpg", tag: "IoT" },
-  ];
-
-  const [firebaseProjects, setFirebaseProjects] = useState<{ image: string; title: string; tag: string; youtubeUrl?: string }[]>([]);
+  const [facilities, setFacilities] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isConfigured || !db) return;
-    const unsub = onSnapshot(collection(db, "projects"), (snap) => {
-      const items = snap.docs.map((d) => d.data() as { image: string; title: string; tag: string; youtubeUrl?: string });
-      setFirebaseProjects(items);
-    }, (error) => {
-      console.error("Firebase fetch error:", error);
+    const unsub = onSnapshot(collection(db, "facilities"), (snap) => {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setFacilities(items);
     });
     return unsub;
   }, []);
 
-  const projects = firebaseProjects.length > 0 ? firebaseProjects : fallbackProjects;
+  const getIcon = (iconName: string) => {
+    switch (iconName) {
+      case "Beaker": return <Beaker />;
+      case "Calculator": return <Calculator />;
+      case "Cpu": return <Cpu />;
+      case "Monitor": return <Monitor />;
+      case "Cast": return <Cast />;
+      case "Gamepad2": return <Gamepad2 />;
+      case "BookOpen": return <BookOpen />;
+      default: return <Database />;
+    }
+  };
+
+  const displayItems = facilities.length > 0 ? facilities : [
+    { title: "Science Lab", desc: "Hands-on experiments in Physics, Chemistry, and Biology.", iconName: "Beaker" },
+    { title: "Math Lab", desc: "Making numbers come alive with practical mental tools.", iconName: "Calculator" },
+    { title: "Atal Lab", desc: "Our Innovation Hub for Robotics, IoT, and 3D Printing.", iconName: "Cpu" },
+  ];
+
+  const projects = facilities.filter(f => f.category === "Project") || []; // Or fetch separately if needed 
+  // Let's keep the project fetching logic clean
+  const [firebaseProjects, setFirebaseProjects] = useState<any[]>([]);
+  useEffect(() => {
+    if (!isConfigured || !db) return;
+    const unsub = onSnapshot(collection(db, "projects"), (snap) => {
+      setFirebaseProjects(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, []);
+  const displayProjects = firebaseProjects.length > 0 ? firebaseProjects : [
+    { title: "Smart Bell System", image: "/atl-project-1.jpg", tag: "Automation" },
+    { title: "Rain Detection Project", image: "/atl-project-2.jpg", tag: "Sensors" },
+  ];
 
   return (
     <section id="labs" className="py-24 bg-brand-brown-red text-white overflow-hidden">
@@ -545,14 +527,14 @@ const LabsFacilities = () => {
         </motion.div>
 
         <div className="flex flex-wrap justify-center gap-8 mb-20 pointer-events-auto">
-          {categories.map((cat, idx) => (
+          {displayItems.map((cat, idx) => (
             <motion.button 
-              key={idx}
+              key={(cat as any).id || idx}
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               whileHover={{ 
-                y: -15, 
+                y: -10, 
                 scale: 1.05,
                 boxShadow: "0 25px 50px -12px rgba(255, 140, 0, 0.4)"
               }}
@@ -561,18 +543,20 @@ const LabsFacilities = () => {
               transition={{ ...springBouncy, delay: idx * 0.05 }}
               className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] text-left group"
             >
-              <div className="h-full bg-white/5 backdrop-blur-md rounded-[2rem] p-8 border border-white/10 group-hover:bg-white/10 group-hover:border-brand-orange/50 transition-all shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
+              <div className="h-full bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 group-hover:bg-white/10 group-hover:border-brand-orange/50 transition-all shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/10 blur-[40px] rounded-full -mr-12 -mt-12 transition-all group-hover:bg-brand-orange/30"></div>
                 
-                <div className="w-16 h-16 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-6 text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all shadow-inner group-hover:shadow-[0_0_30px_rgba(255,140,0,0.5)]">
-                  {cat.icon}
+                <div className="w-20 h-20 bg-brand-orange/10 rounded-3xl flex items-center justify-center mb-6 text-brand-orange group-hover:bg-brand-orange group-hover:text-white transition-all shadow-inner group-hover:shadow-[0_0_40px_rgba(255,140,0,0.6)]">
+                  <div className="p-4 transform group-hover:scale-125 transition-transform duration-500 text-3xl">
+                    {getIcon((cat as any).iconName)}
+                  </div>
                 </div>
                 
-                <h4 className="font-black text-xl mb-3 text-white uppercase tracking-tighter whitespace-nowrap">{cat.title}</h4>
-                <div className="text-sm text-white/50 mb-4 line-clamp-2 leading-tight">{cat.desc}</div>
+                <h4 className="font-black text-xl mb-3 text-white uppercase tracking-tighter whitespace-nowrap">{(cat as any).title}</h4>
+                <div className="text-sm text-white/50 mb-4 line-clamp-2 leading-tight">{(cat as any).desc}</div>
                 
                 <div className="mt-auto flex items-center gap-2 text-brand-yellow font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                  View Detail <ChevronRight size={14} />
+                  Explore Now <ChevronRight size={14} />
                 </div>
               </div>
             </motion.button>
@@ -747,7 +731,7 @@ const Academics = () => {
             initial={{ opacity: 0, x: -60 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={springFloaty}
+            transition={{ type: "spring", stiffness: 100, damping: 15 }}
           >
             <motion.h2 
               className="text-brand-yellow font-bold text-sm tracking-widest uppercase mb-4"
